@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePage({
   meta: {
-    title: 'Example: Semantic Search: exploration 1',
+    title: 'Example: Semantic Search Exploration 1',
     description: 'Semantic search: explicit path on results display',
   },
 })
