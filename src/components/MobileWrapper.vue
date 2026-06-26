@@ -3,7 +3,8 @@
  * Phone-frame preview shell: full-width children below **480px** viewport;
  * centred column with neutral side gutters (Codex **`--background-color-neutral`**) when wider.
  *
- * Compose with **`ChromeWrapper skin="mobile"`** (or other mobile-skinned content)
+ * Compose with a mobile-skinned surface such as **`ChromeWrapper skin="mobile"`**
+ * or the standalone wireframe **`WireframeChromeWrapper`** inside the default slot.
  * inside the default slot.
  */
 interface Props {

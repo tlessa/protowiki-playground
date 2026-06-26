@@ -8,6 +8,7 @@ import {
   resetUserPageListField,
   saveConfig,
   type Config,
+  type ConfigIconSet,
   type ConfigTheme,
   type ConfigUser,
   type PageListKey,
@@ -35,6 +36,7 @@ watch(
 export function useConfig(): {
   config: DeepReadonly<Ref<Config>>
   theme: Ref<ConfigTheme>
+  iconSet: Ref<ConfigIconSet>
   user: Ref<ConfigUser>
   realUsername: Ref<string>
   apiContact: Ref<string>
@@ -57,6 +59,13 @@ export function useConfig(): {
     get: () => config.value.user,
     set: (value: ConfigUser) => {
       config.value = { ...config.value, user: value }
+    },
+  })
+
+  const iconSet = computed({
+    get: () => config.value.iconSet,
+    set: (value: ConfigIconSet) => {
+      config.value = { ...config.value, iconSet: value }
     },
   })
 
@@ -135,6 +144,7 @@ export function useConfig(): {
   return {
     config: readonly(config),
     theme,
+    iconSet,
     user,
     realUsername,
     apiContact,

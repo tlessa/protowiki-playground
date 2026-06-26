@@ -4,10 +4,17 @@ import { computed } from 'vue'
 import { CdxButton, CdxSelect, CdxTextInput } from '@wikimedia/codex'
 
 import { useConfig } from '@/composables/useConfig'
-import { CONFIG_THEME_MENU_ITEMS, CONFIG_USER_MENU_ITEMS, formatPageList, parsePageList } from '@/config'
+import {
+  CONFIG_ICON_SET_MENU_ITEMS,
+  CONFIG_THEME_MENU_ITEMS,
+  CONFIG_USER_MENU_ITEMS,
+  formatPageList,
+  parsePageList,
+} from '@/config'
 
 const {
   theme,
+  iconSet,
   user,
   realUsername,
   apiContact,
@@ -41,6 +48,14 @@ const editedPagesText = computed({
         v-model:selected="theme"
         :menu-items="CONFIG_THEME_MENU_ITEMS"
         default-label="Light"
+      />
+    </label>
+    <label class="user-settings-panel__field">
+      <span class="user-settings-panel__label">Icon set</span>
+      <CdxSelect
+        v-model:selected="iconSet"
+        :menu-items="CONFIG_ICON_SET_MENU_ITEMS"
+        default-label="Codex"
       />
     </label>
     <label class="user-settings-panel__field">

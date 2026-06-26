@@ -89,6 +89,7 @@ trailing **Inside ProtoWiki** section.
 | [`wiki-apis`](.agents/skills/wiki-apis/SKILL.md)                             | REST API + Action API + etiquette                                                                   |
 | [`wiki-signals`](.agents/skills/wiki-signals/SKILL.md)                       | Catalog of signals (inference, analytics, links, curation, attribution, edit suggestions)           |
 | [`wiki-snapshot-data`](.agents/skills/wiki-snapshot-data/SKILL.md)           | Snapshotting article HTML and skin CSS — universal pattern                                          |
+| [`wiki-material-icons`](.agents/skills/wiki-material-icons/SKILL.md)         | Sourcing SVG icons from Wikimedia Android `icon-svgs`, with licensing/provenance and mockup usage |
 | [`protowiki-snapshot-data`](.agents/skills/protowiki-snapshot-data/SKILL.md) | ProtoWiki integration: `public/snapshots/`, `src/styles/wiki-skins/`, `ArticleSnapshot` consumption |
 
 Edit Check-style suggestion overlays are split between two skills: see

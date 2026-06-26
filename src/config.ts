@@ -1,5 +1,6 @@
 export type ConfigTheme = 'light' | 'dark' | 'system'
 export type ConfigUser = 'logged-out' | 'new' | 'experienced' | 'real'
+export type ConfigIconSet = 'codex' | 'material'
 
 export type PageListKey = 'watchlist' | 'readingList' | 'editedPages'
 
@@ -13,6 +14,7 @@ export interface UserPageLists {
 
 export interface Config {
   theme: ConfigTheme
+  iconSet: ConfigIconSet
   user: ConfigUser
   /** Wikipedia username when `user` is `'real'`. */
   realUsername: string
@@ -66,6 +68,7 @@ export const DEFAULT_USER_PAGE_LISTS: Record<ConfigUser, UserPageLists> = {
 
 export const DEFAULT_CONFIG: Config = {
   theme: 'light',
+  iconSet: 'codex',
   user: 'new',
   realUsername: '',
   apiContact: '',
@@ -93,6 +96,11 @@ export const CONFIG_THEME_MENU_ITEMS: { value: ConfigTheme; label: string }[] = 
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
   { value: 'system', label: 'System' },
+]
+
+export const CONFIG_ICON_SET_MENU_ITEMS: { value: ConfigIconSet; label: string }[] = [
+  { value: 'codex', label: 'Codex' },
+  { value: 'material', label: 'Material SVGs' },
 ]
 
 /** Normalize a Wikipedia username for API calls and cache keys. */
@@ -177,11 +185,16 @@ export function wikimediaApiFetchHeaders(purpose?: string, apiContact?: string):
 const STORAGE_KEY = 'protowiki-prototype-user-config'
 
 const VALID_THEMES: ConfigTheme[] = ['light', 'dark', 'system']
+const VALID_ICON_SETS: ConfigIconSet[] = ['codex', 'material']
 const VALID_USERS: ConfigUser[] = ['logged-out', 'new', 'experienced', 'real']
 const PAGE_LIST_KEYS: PageListKey[] = ['watchlist', 'readingList', 'editedPages']
 
 function isConfigTheme(value: unknown): value is ConfigTheme {
   return typeof value === 'string' && VALID_THEMES.includes(value as ConfigTheme)
+}
+
+function isConfigIconSet(value: unknown): value is ConfigIconSet {
+  return typeof value === 'string' && VALID_ICON_SETS.includes(value as ConfigIconSet)
 }
 
 function isConfigUser(value: unknown): value is ConfigUser {
@@ -272,6 +285,7 @@ export function normalizeConfig(input: unknown): Config {
 
   return {
     theme: isConfigTheme(record.theme) ? record.theme : DEFAULT_CONFIG.theme,
+    iconSet: isConfigIconSet(record.iconSet) ? record.iconSet : DEFAULT_CONFIG.iconSet,
     user: isConfigUser(record.user) ? record.user : DEFAULT_CONFIG.user,
     realUsername,
     apiContact,
@@ -321,6 +335,7 @@ export function loadConfig(): Config {
 function cloneConfig(config: Config): Config {
   return {
     theme: config.theme,
+    iconSet: config.iconSet,
     user: config.user,
     realUsername: config.realUsername,
     apiContact: config.apiContact,
