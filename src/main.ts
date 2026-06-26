@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import { handleHotUpdate, routes } from 'vue-router/auto-routes'
 
 import App from './App.vue'
@@ -43,11 +43,9 @@ function syncGithubPagesPreviewRoute(router: ReturnType<typeof createRouter>): v
 initTheming()
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(),
   routes,
 })
-
-syncGithubPagesPreviewRoute(router)
 
 if (import.meta.hot) {
   handleHotUpdate(router)
