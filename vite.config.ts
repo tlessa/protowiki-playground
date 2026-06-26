@@ -8,7 +8,7 @@ import vue from '@vitejs/plugin-vue'
 // Temporary local-machine configuration.
 // Replace this with the official ProtoWiki Vite configuration once it is added back to GitHub.
 export default defineConfig({
-  base: '/protowiki-playground-share/',
+  base: '/protowiki-playground/',
   plugins: [
     VueRouter({
       routesFolder: [
