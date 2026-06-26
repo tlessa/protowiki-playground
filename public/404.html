@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ProtoWiki</title>
+    <script>
+      ;(function (l) {
+        sessionStorage.setItem(
+          'protowiki-gh-pages-path',
+          l.pathname.replace(/^\/protowiki-playground/, '') + (l.search || '') + (l.hash || '')
+        )
+        l.replace('/protowiki-playground/')
+      })(location)
+    </script>
+  </head>
+  <body></body>
+</html>
