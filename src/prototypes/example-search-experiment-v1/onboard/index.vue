@@ -21,7 +21,7 @@ function onScroll(e: Event) {
 
 function getStarted() {
   localStorage.setItem('v1-search-onboarded', '1')
-  router.push('/example-search-experiment-v1/search')
+  router.push('/example-search-experiment-v1/search/focused')
 }
 </script>
 
