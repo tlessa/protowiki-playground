@@ -1,1 +1,0 @@
-import{A as r}from"./ArticleChromeWrapper-Sr5Lcm5Y.js";import{d as o,c as e,o as t}from"./index-CcQ-zrYf.js";import"./codex-icons-DEZdK9x9.js";import"./materialIconPaths-Dbw939yb.js";import"./_plugin-vue_export-helper-DlAUqK2U.js";import"./index-bSHR_oGr.js";const d=o({__name:"index",setup(p){return(m,a)=>(t(),e(r))}});export{d as default};
