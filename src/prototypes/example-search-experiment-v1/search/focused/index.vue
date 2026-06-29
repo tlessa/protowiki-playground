@@ -57,6 +57,17 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let abortController: AbortController | null = null
 
 const isShowingResults = computed(() => searchQuery.value.trim().length > 0)
+
+const showBetaMenu = ref(false)
+
+function toggleBetaMenu(e: Event) {
+  e.stopPropagation()
+  showBetaMenu.value = !showBetaMenu.value
+}
+
+function closeBetaMenu() {
+  showBetaMenu.value = false
+}
 function getApiErrorMessage(status: number): string {
   if (status === 429) return 'Too many requests. Please wait a moment and try again.'
   if (status >= 500) return 'Wikipedia search is temporarily unavailable.'
@@ -311,7 +322,14 @@ onMounted(async () => {
         <ul v-else class="focused-search-content__results">
           <li class="focused-search-content__result-item">
             <button type="button" class="focused-search-content__result-button" @click="openSemanticResults()">
-              <span class="focused-search-content__result-copy"><span class="mwf-android-type-small focused-search-content__dive-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 4.67578C0 4.03125 0.121094 3.42773 0.363281 2.86523C0.605469 2.29883 0.941406 1.80078 1.37109 1.37109C1.80078 0.941406 2.29688 0.605469 2.85938 0.363281C3.42578 0.121094 4.03125 0 4.67578 0C5.32031 0 5.92383 0.121094 6.48633 0.363281C7.05273 0.605469 7.55078 0.941406 7.98047 1.37109C8.41016 1.80078 8.74609 2.29883 8.98828 2.86523C9.23047 3.42773 9.35156 4.03125 9.35156 4.67578C9.35156 5.21094 9.26562 5.71875 9.09375 6.19922C8.92578 6.67969 8.69141 7.11523 8.39062 7.50586L11.2559 10.3887C11.3184 10.4512 11.3652 10.5234 11.3965 10.6055C11.4316 10.6875 11.4492 10.7754 11.4492 10.8691C11.4492 10.998 11.4199 11.1152 11.3613 11.2207C11.3066 11.3262 11.2285 11.4082 11.127 11.4668C11.0254 11.5293 10.9082 11.5605 10.7754 11.5605C10.6816 11.5605 10.5918 11.543 10.5059 11.5078C10.4238 11.4766 10.3477 11.4277 10.2773 11.3613L7.39453 8.47266C7.01172 8.74609 6.58984 8.96094 6.12891 9.11719C5.66797 9.27344 5.18359 9.35156 4.67578 9.35156C4.03125 9.35156 3.42578 9.23047 2.85938 8.98828C2.29688 8.74609 1.80078 8.41016 1.37109 7.98047C0.941406 7.55078 0.605469 7.05469 0.363281 6.49219C0.121094 5.92578 0 5.32031 0 4.67578ZM1.00195 4.67578C1.00195 5.18359 1.0957 5.66016 1.2832 6.10547C1.47461 6.54688 1.73828 6.93555 2.07422 7.27148C2.41406 7.60742 2.80469 7.87109 3.24609 8.0625C3.69141 8.25391 4.16797 8.34961 4.67578 8.34961C5.18359 8.34961 5.6582 8.25391 6.09961 8.0625C6.54492 7.87109 6.93555 7.60742 7.27148 7.27148C7.60742 6.93555 7.87109 6.54688 8.0625 6.10547C8.25391 5.66016 8.34961 5.18359 8.34961 4.67578C8.34961 4.16797 8.25391 3.69336 8.0625 3.25195C7.87109 2.80664 7.60742 2.41602 7.27148 2.08008C6.93555 1.74023 6.54492 1.47656 6.09961 1.28906C5.6582 1.09766 5.18359 1.00195 4.67578 1.00195C4.16797 1.00195 3.69141 1.09766 3.24609 1.28906C2.80469 1.47656 2.41406 1.74023 2.07422 2.08008C1.73828 2.41602 1.47461 2.80664 1.2832 3.25195C1.0957 3.69336 1.00195 4.16797 1.00195 4.67578Z" fill="white"/></svg>{{ selectedLanguage === 'pt' ? 'Mergulhe' : selectedLanguage === 'es' ? 'Bucear' : 'Dive' }}</span><span class="mwf-android-type-p focused-search-content__result-title">{{ searchQuery.trim() }}</span><span class="mwf-android-type-p focused-search-content__result-description">{{ selectedLanguage === 'pt' ? 'Pesquisar dentro de artigos da Wikipédia' : selectedLanguage === 'es' ? 'Buscar dentro de los artículos de Wikipedia' : 'Search within Wikipedia articles' }}</span></span>
+              <span class="focused-search-content__result-copy"><span class="focused-search-content__dive-row"><span class="mwf-android-type-small focused-search-content__dive-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 4.67578C0 4.03125 0.121094 3.42773 0.363281 2.86523C0.605469 2.29883 0.941406 1.80078 1.37109 1.37109C1.80078 0.941406 2.29688 0.605469 2.85938 0.363281C3.42578 0.121094 4.03125 0 4.67578 0C5.32031 0 5.92383 0.121094 6.48633 0.363281C7.05273 0.605469 7.55078 0.941406 7.98047 1.37109C8.41016 1.80078 8.74609 2.29883 8.98828 2.86523C9.23047 3.42773 9.35156 4.03125 9.35156 4.67578C9.35156 5.21094 9.26562 5.71875 9.09375 6.19922C8.92578 6.67969 8.69141 7.11523 8.39062 7.50586L11.2559 10.3887C11.3184 10.4512 11.3652 10.5234 11.3965 10.6055C11.4316 10.6875 11.4492 10.7754 11.4492 10.8691C11.4492 10.998 11.4199 11.1152 11.3613 11.2207C11.3066 11.3262 11.2285 11.4082 11.127 11.4668C11.0254 11.5293 10.9082 11.5605 10.7754 11.5605C10.6816 11.5605 10.5918 11.543 10.5059 11.5078C10.4238 11.4766 10.3477 11.4277 10.2773 11.3613L7.39453 8.47266C7.01172 8.74609 6.58984 8.96094 6.12891 9.11719C5.66797 9.27344 5.18359 9.35156 4.67578 9.35156C4.03125 9.35156 3.42578 9.23047 2.85938 8.98828C2.29688 8.74609 1.80078 8.41016 1.37109 7.98047C0.941406 7.55078 0.605469 7.05469 0.363281 6.49219C0.121094 5.92578 0 5.32031 0 4.67578ZM1.00195 4.67578C1.00195 5.18359 1.0957 5.66016 1.2832 6.10547C1.47461 6.54688 1.73828 6.93555 2.07422 7.27148C2.41406 7.60742 2.80469 7.87109 3.24609 8.0625C3.69141 8.25391 4.16797 8.34961 4.67578 8.34961C5.18359 8.34961 5.6582 8.25391 6.09961 8.0625C6.54492 7.87109 6.93555 7.60742 7.27148 7.27148C7.60742 6.93555 7.87109 6.54688 8.0625 6.10547C8.25391 5.66016 8.34961 5.18359 8.34961 4.67578C8.34961 4.16797 8.25391 3.69336 8.0625 3.25195C7.87109 2.80664 7.60742 2.41602 7.27148 2.08008C6.93555 1.74023 6.54492 1.47656 6.09961 1.28906C5.6582 1.09766 5.18359 1.00195 4.67578 1.00195C4.16797 1.00195 3.69141 1.09766 3.24609 1.28906C2.80469 1.47656 2.41406 1.74023 2.07422 2.08008C1.73828 2.41602 1.47461 2.80664 1.2832 3.25195C1.0957 3.69336 1.00195 4.16797 1.00195 4.67578Z" fill="white"/></svg>{{ selectedLanguage === 'pt' ? 'Mergulhe' : selectedLanguage === 'es' ? 'Bucear' : 'Dive' }}</span><span class="focused-search-content__dive-beta-wrap">
+                  <button type="button" class="focused-search-content__dive-beta" @click.stop="toggleBetaMenu">Beta</button>
+                  <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                    <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+                    <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+                  </div>
+                  <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                </span></span><span class="mwf-android-type-p focused-search-content__result-title">{{ searchQuery.trim() }}</span><span class="mwf-android-type-p focused-search-content__result-description">{{ selectedLanguage === 'pt' ? 'Pesquisar dentro de artigos da Wikipédia' : selectedLanguage === 'es' ? 'Buscar dentro de los artículos de Wikipedia' : 'Search within Wikipedia articles' }}</span></span>
             </button>
           </li>
           <li v-for="result in searchResults" :key="result.title" class="focused-search-content__result-item">
@@ -602,6 +620,63 @@ onMounted(async () => {
 
 .focused-search-content__dive-badge { display: inline-flex; align-items: center; width: fit-content; gap: 8px; padding: 3px 12px; border-radius: 10px; background: #8a8f95; color: #fff; }
 .focused-search-content__dive-badge svg { display: block; width: 12px; height: 12px; }
+.focused-search-content__dive-row { display: inline-flex; align-items: center; gap: 6px; }
+
+.focused-search-content__dive-beta-wrap {
+  position: relative;
+}
+
+.focused-search-content__dive-beta {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #3366cc;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+}
+
+.beta-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.beta-menu__item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  font-size: 16px;
+  color: #202122;
+  cursor: pointer;
+}
+
+.beta-menu__item:hover {
+  background: #f8f9fa;
+}
+
+.beta-menu__item--danger {
+  color: #d33;
+}
+
+.beta-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
 
 .focused-search-content__result-title,
 .focused-search-content__result-description {

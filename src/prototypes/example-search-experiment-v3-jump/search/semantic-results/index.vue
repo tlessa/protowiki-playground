@@ -74,6 +74,17 @@ function dummyMeta(title: string): { contributors: number; references: number } 
 
 const isSkeletonVisible = ref(false)
 
+const showBetaMenu = ref(false)
+
+function toggleBetaMenu(e: Event) {
+  e.stopPropagation()
+  showBetaMenu.value = !showBetaMenu.value
+}
+
+function closeBetaMenu() {
+  showBetaMenu.value = false
+}
+
 const showFeedbackSheet = ref(false)
 const hoverRating = ref(0)
 const selectedRating = ref(0)
@@ -258,7 +269,14 @@ onMounted(async () => {
         </p>
 
         <header v-if="isShowingResults" class="focused-search-dive-header">
-          <span class="focused-search-dive-header__beta">Beta</span>
+          <span class="focused-search-dive-header__beta-wrap">
+            <button type="button" class="focused-search-dive-header__beta" @click.stop="toggleBetaMenu">Beta</button>
+            <div v-if="showBetaMenu" class="beta-menu" role="menu">
+              <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+              <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+            </div>
+            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+          </span>
           <div class="focused-search-dive-header__row">
             <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
             <button class="focused-search-dive-header__rate" type="button" aria-label="Rate results" @click="openFeedbackSheet">
@@ -617,6 +635,11 @@ onMounted(async () => {
   margin: 0;
 }
 
+.focused-search-dive-header__beta-wrap {
+  position: relative;
+  align-self: flex-start;
+}
+
 .focused-search-dive-header__beta {
   display: inline-block;
   align-self: flex-start;
@@ -630,6 +653,46 @@ onMounted(async () => {
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+}
+
+.beta-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.beta-menu__item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  font-size: 16px;
+  color: #202122;
+  cursor: pointer;
+}
+
+.beta-menu__item:hover {
+  background: #f8f9fa;
+}
+
+.beta-menu__item--danger {
+  color: #d33;
+}
+
+.beta-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
 }
 
 .focused-search-dive-header__rate {

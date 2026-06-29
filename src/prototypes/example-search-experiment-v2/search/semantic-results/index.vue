@@ -95,6 +95,8 @@ onMounted(() => {
               <span class="mwf-android-type-small semantic-sheet__beta">Beta</span>
             </header>
 
+            <p class="semantic-sheet__query">can cats</p>
+
             <p v-if="searchError" class="mwf-android-type-p semantic-sheet__status">
               {{ searchError }}
             </p>
@@ -226,6 +228,12 @@ onMounted(() => {
   font-weight: 700 !important;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.semantic-sheet__query {
+  margin: 0;
+  font-size: 16px;
+  color: #202122;
 }
 
 .semantic-sheet__status {

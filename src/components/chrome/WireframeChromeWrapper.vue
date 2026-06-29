@@ -296,7 +296,8 @@ const props = withDefaults(defineProps<Props>(), {
   background: #e5e5e5;
 }
 
-.mobile-chrome-wrapper__nav-item :deep(svg) {
+.mobile-chrome-wrapper__nav-item :deep(svg),
+.mobile-chrome-wrapper__nav-item :deep(img) {
   display: block;
   width: 20px;
   height: 20px;

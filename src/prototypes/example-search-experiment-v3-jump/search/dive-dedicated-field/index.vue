@@ -20,6 +20,17 @@ const router = useRouter()
 
 const searchQuery = ref('')
 
+const showBetaMenu = ref(false)
+
+function toggleBetaMenu(e: Event) {
+  e.stopPropagation()
+  showBetaMenu.value = !showBetaMenu.value
+}
+
+function closeBetaMenu() {
+  showBetaMenu.value = false
+}
+
 const sampleQuery = 'When was Pluto unlisted as a planet?'
 
 const result = {
@@ -40,7 +51,17 @@ const result = {
         <button class="dive-page__back" type="button" aria-label="Go back" @click="router.push('/example-search-experiment-v3-jump/search')">
           <span class="dive-page__back-arrow" aria-hidden="true" />
         </button>
-        <h1 class="dive-page__title">Dive straight to the passage</h1>
+        <div class="dive-page__title-row">
+          <h1 class="dive-page__title">Dive straight to the passage</h1>
+          <span class="dive-page__beta-wrap">
+            <button type="button" class="dive-page__beta" @click.stop="toggleBetaMenu">Beta</button>
+            <div v-if="showBetaMenu" class="beta-menu" role="menu">
+              <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+              <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+            </div>
+            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+          </span>
+        </div>
       </header>
 
       <p class="dive-page__description">
@@ -117,6 +138,71 @@ const result = {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+}
+
+.dive-page__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+}
+
+.dive-page__beta-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.dive-page__beta {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #3366cc;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+}
+
+.beta-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.beta-menu__item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  font-size: 16px;
+  color: #202122;
+  cursor: pointer;
+}
+
+.beta-menu__item:hover {
+  background: #f8f9fa;
+}
+
+.beta-menu__item--danger {
+  color: #d33;
+}
+
+.beta-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
 }
 
 .dive-page__back {

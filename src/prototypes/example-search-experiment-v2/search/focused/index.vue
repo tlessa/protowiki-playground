@@ -221,6 +221,17 @@ function openArticle(result: WikiSemanticResult) {
 
 const showDive = ref(false)
 
+const showBetaMenu = ref(false)
+
+function toggleBetaMenu(e: Event) {
+  e.stopPropagation()
+  showBetaMenu.value = !showBetaMenu.value
+}
+
+function closeBetaMenu() {
+  showBetaMenu.value = false
+}
+
 interface WikiSemanticResult {
   title: string
   extract?: string
@@ -415,7 +426,14 @@ onMounted(async () => {
           <li class="focused-search-dive-card-item">
             <div class="focused-search-dive-card">
               <div class="focused-search-dive-card__body">
-                <span class="mwf-android-type-small focused-search-dive-card__beta">Beta</span>
+                <span class="focused-search-dive-card__beta-wrap">
+                  <button type="button" class="mwf-android-type-small focused-search-dive-card__beta" @click.stop="toggleBetaMenu">Beta</button>
+                  <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                    <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+                    <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+                  </div>
+                  <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                </span>
                 <p class="mwf-android-type-h1 focused-search-dive-card__query">{{ searchQuery.trim() }}</p>
                 <p class="mwf-android-type-p focused-search-dive-card__desc">
                   {{ selectedLanguage === 'pt'
@@ -484,8 +502,17 @@ onMounted(async () => {
             <div class="dive-sheet__content mobile-android-type mobile-android-type--wireframe">
               <header class="dive-sheet__header">
                 <h2 class="mwf-android-type-h1 dive-sheet__title">Dive</h2>
-                <span class="dive-sheet__beta">Beta</span>
+                <span class="dive-sheet__beta-wrap">
+                  <button type="button" class="dive-sheet__beta" @click.stop="toggleBetaMenu">Beta</button>
+                  <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                    <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+                    <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+                  </div>
+                  <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                </span>
               </header>
+
+              <p class="dive-sheet__query">{{ searchQuery.trim() || 'can cats' }}</p>
 
               <p v-if="diveError" class="mwf-android-type-p dive-sheet__status">{{ diveError }}</p>
 
@@ -813,12 +840,19 @@ onMounted(async () => {
   min-width: 0;
 }
 
+.focused-search-dive-card__beta-wrap {
+  position: relative;
+}
+
 .focused-search-dive-card__beta {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 6px;
   background: #8a8f95;
   color: #fff;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .focused-search-dive-card__query {
@@ -1004,6 +1038,10 @@ onMounted(async () => {
   margin: 0;
 }
 
+.dive-sheet__beta-wrap {
+  position: relative;
+}
+
 .dive-sheet__beta {
   padding: 2px 6px;
   border-radius: 4px;
@@ -1013,6 +1051,52 @@ onMounted(async () => {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+}
+
+.beta-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.beta-menu__item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  font-size: 16px;
+  color: #202122;
+  cursor: pointer;
+}
+
+.beta-menu__item:hover {
+  background: #f8f9fa;
+}
+
+.beta-menu__item--danger {
+  color: #d33;
+}
+
+.beta-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+
+.dive-sheet__query {
+  margin: 0;
+  font-size: 16px;
+  color: #202122;
 }
 
 .dive-sheet__status {
