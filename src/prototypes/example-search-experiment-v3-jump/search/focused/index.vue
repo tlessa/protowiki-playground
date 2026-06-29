@@ -4,7 +4,6 @@ import { cdxIconTrash } from '@wikimedia/codex-icons'
 import { RouterLink, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/AppIcon.vue'
-import LottiePlayer from '@/components/LottiePlayer.vue'
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
 import { wikimediaApiFetchHeaders, wikiHostFromLang } from '@/config'
@@ -206,121 +205,13 @@ function selectLanguage(lang: 'en' | 'pt' | 'es') {
   nextTick(() => searchInput.value?.focus())
 }
 
-function openArticle(result: WikiSemanticResult) {
+function openArticle(result: WikiSearchResult) {
   router.push({
-    path: '/example-search-experiment-v2/article',
-    query: {
-      article: result.title,
-      ...(result.anchor ? { anchor: result.anchor } : {}),
-    },
-    state: { highlight: result.extract ?? '' },
+    path: '/example-search-experiment-v3-jump/article',
+    query: { article: result.title },
   })
 }
 
-// ── Dive sheet ──────────────────────────────────────────────────
-
-const showDive = ref(false)
-
-interface WikiSemanticResult {
-  title: string
-  extract?: string
-  sectionTitle?: string
-  anchor?: string
-}
-
-const diveResults = ref<WikiSemanticResult[]>([])
-const diveError = ref('')
-const isDiveSearching = ref(false)
-const isDiveSkeletonVisible = ref(false)
-let diveSkeletonTimer: ReturnType<typeof setTimeout> | null = null
-let diveSkeletonDone = false
-let diveAbortController: AbortController | null = null
-
-const DIVE_SKIP_SECTIONS = new Set(['See also', 'References', 'External links', 'Notes', 'Further reading', 'Bibliography'])
-
-function getRestOfExtract(text: string): string {
-  const match = text.match(/^.*?[.!?](?:\s|$)/s)
-  if (!match) return ''
-  return text.slice(match[0].length).trim().slice(0, 400)
-}
-
-function dummyMeta(title: string): { contributors: number; references: number } {
-  let h = 0
-  for (let i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) >>> 0
-  return { contributors: 200 + (h % 800), references: 10 + (h % 60) }
-}
-
-async function fetchSectionTitle(title: string, signal?: AbortSignal): Promise<string | undefined> {
-  const params = new URLSearchParams({
-    action: 'parse', page: title, prop: 'sections',
-    format: 'json', formatversion: '2', origin: '*',
-  })
-  try {
-    const res = await fetch(`https://${searchHost.value}/w/api.php?${params.toString()}`, {
-      signal, headers: wikimediaApiFetchHeaders('mobile-wireframe-search'),
-    })
-    if (!res.ok) return undefined
-    const data = await res.json() as { parse?: { sections?: Array<{ line: string }> } }
-    const sections = (data.parse?.sections ?? []).filter(s => s.line && !DIVE_SKIP_SECTIONS.has(s.line))
-    if (!sections.length) return undefined
-    let h = 0
-    for (let i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) >>> 0
-    return sections[h % sections.length].line
-  } catch {
-    return undefined
-  }
-}
-
-function startDiveSkeleton() {
-  isDiveSkeletonVisible.value = true
-  diveSkeletonDone = false
-  if (diveSkeletonTimer) clearTimeout(diveSkeletonTimer)
-  diveSkeletonTimer = setTimeout(() => {
-    diveSkeletonDone = true
-    if (!isDiveSearching.value) isDiveSkeletonVisible.value = false
-  }, 1000)
-}
-
-async function fetchDiveResults(query: string, signal?: AbortSignal): Promise<WikiSemanticResult[]> {
-  const trimmed = query.trim()
-  if (!trimmed.length) return []
-  const params = new URLSearchParams({
-    action: 'query', generator: 'search', gsrsearch: trimmed, gsrlimit: '10',
-    gsrnamespace: '0', prop: 'description|extracts',
-    exintro: '1', exsentences: '4', explaintext: '1',
-    format: 'json', formatversion: '2', origin: '*',
-  })
-  const response = await fetch(`https://${searchHost.value}/w/api.php?${params.toString()}`, {
-    signal, headers: wikimediaApiFetchHeaders('mobile-wireframe-search'),
-  })
-  if (!response.ok) throw new Error(getApiErrorMessage(response.status))
-  const data = (await response.json()) as {
-    query?: { pages?: Array<{ title: string; extract?: string; index?: number }> }
-  }
-  return [...(data.query?.pages ?? [])]
-    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-    .map(page => ({ title: page.title, extract: page.extract?.trim() || undefined }))
-}
-
-const HARDCODED_RESULTS: WikiSemanticResult[] = [
-  { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]' },
-  { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions, either naturally with scotopic vision or through a night-vision device. Night vision requires both sufficient spectral range and sufficient intensity range. Humans have poor night vision compared to many animals such as cats, dogs, foxes and rabbits, in part because the human eye lacks a tapetum lucidum' },
-  { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.[14]' },
-  { title: 'Night vision', sectionTitle: 'Intensity range', anchor: 'Intensity_range', extract: 'Many animals have better night vision than humans do, the result of one or more differences in the morphology and anatomy of their eyes. These include having a larger eyeball, a larger lens, a larger optical aperture (the pupils may expand to the physical limit of the eyelids), more rods than cones (or rods exclusively) in the retina, and a tapetum lucidum.' },
-  { title: 'Cat', sectionTitle: 'Whiskers', anchor: 'Whiskers', extract: 'These provide information on the width of gaps and on the location of objects in the dark, both by touching objects directly and by sensing air currents.' },
-]
-
-function openDive() {
-  diveResults.value = HARDCODED_RESULTS
-  showDive.value = true
-}
-
-function closeDive() {
-  showDive.value = false
-  diveAbortController?.abort()
-  diveAbortController = null
-  if (diveSkeletonTimer) { clearTimeout(diveSkeletonTimer); diveSkeletonTimer = null }
-}
 
 onMounted(async () => {
   await nextTick()
@@ -330,12 +221,11 @@ onMounted(async () => {
 
 <template>
   <WireframeMobileWrapper>
-    <div class="focused-page-wrap">
-    <WireframeChromeWrapper active-tab="search" home-url="/example-search-experiment-v2/home" search-url="/example-search-experiment-v2/search" class="mobile-android-type mobile-android-type--wireframe">
+    <WireframeChromeWrapper active-tab="search" home-url="/example-search-experiment-v3-jump/community" search-url="/example-search-experiment-v3-jump/search" class="mobile-android-type mobile-android-type--wireframe">
       <template #header>
         <header class="focused-search-header" aria-label="Focused search header">
           <RouterLink
-            to="/example-search-experiment-v2/search"
+            to="/example-search-experiment-v3-jump/search"
             class="focused-search-header__back"
             aria-label="Back"
           >
@@ -412,27 +302,6 @@ onMounted(async () => {
         </ul>
 
         <ul v-else class="focused-search-content__results">
-          <li class="focused-search-dive-card-item">
-            <div class="focused-search-dive-card">
-              <div class="focused-search-dive-card__body">
-                <span class="mwf-android-type-small focused-search-dive-card__beta">Beta</span>
-                <p class="mwf-android-type-h1 focused-search-dive-card__query">{{ searchQuery.trim() }}</p>
-                <p class="mwf-android-type-p focused-search-dive-card__desc">
-                  {{ selectedLanguage === 'pt'
-                    ? 'Pesquise dentro de artigos e receba respostas como trechos palavra por palavra.'
-                    : selectedLanguage === 'es'
-                      ? 'Busca dentro de los artículos y obtén tus respuestas como pasajes palavra por palavra.'
-                      : 'Search within articles and get your answers as word-for-word passages.' }}
-                </p>
-                <button type="button" class="mwf-android-type-p focused-search-dive-card__btn" @click="openDive()">
-                  {{ selectedLanguage === 'pt' ? 'Mergulhe' : selectedLanguage === 'es' ? 'Bucear' : 'Dive' }}
-                </button>
-              </div>
-              <div class="focused-search-dive-card__illus" aria-hidden="true">
-                <LottiePlayer src="/assets/search-scan.lottie.json" />
-              </div>
-            </div>
-          </li>
           <li v-for="result in searchResults" :key="result.title" class="focused-search-content__result-item">
             <button
               type="button"
@@ -474,72 +343,6 @@ onMounted(async () => {
         </footer>
       </template>
     </WireframeChromeWrapper>
-
-    <Transition name="dive-sheet">
-      <div v-if="showDive" class="dive-overlay">
-        <div class="dive-overlay__scrim" aria-hidden="true" @click="closeDive()" />
-        <div class="dive-sheet" role="dialog" aria-modal="true" aria-label="Dive results">
-          <div class="dive-sheet__handle" aria-hidden="true" />
-          <div class="dive-sheet__scroll">
-            <div class="dive-sheet__content mobile-android-type mobile-android-type--wireframe">
-              <header class="dive-sheet__header">
-                <h2 class="mwf-android-type-h1 dive-sheet__title">Dive</h2>
-                <span class="dive-sheet__beta">Beta</span>
-              </header>
-
-              <p v-if="diveError" class="mwf-android-type-p dive-sheet__status">{{ diveError }}</p>
-
-              <ul v-if="isDiveSkeletonVisible" class="dive-sheet__results" aria-hidden="true">
-                <li v-for="n in 3" :key="n">
-                  <article class="dive-semantic-card dive-skeleton-card">
-                    <div class="dive-skeleton dive-skeleton--trail" />
-                    <div class="dive-semantic-card__snippet">
-                      <div class="dive-skeleton dive-skeleton--line dive-skeleton--line-full" />
-                      <div class="dive-skeleton dive-skeleton--line dive-skeleton--line-wide" />
-                      <div class="dive-skeleton dive-skeleton--line dive-skeleton--line-medium" />
-                    </div>
-                    <div class="dive-semantic-card__bottom">
-                      <div class="dive-skeleton dive-skeleton--line" style="width: 130px;" />
-                    </div>
-                  </article>
-                </li>
-              </ul>
-
-              <ul v-else class="dive-sheet__results">
-                <li v-if="!diveResults.length && !diveError">
-                  <p class="mwf-android-type-p dive-sheet__status">No results found.</p>
-                </li>
-                <li v-for="result in diveResults" :key="result.title">
-                  <article class="dive-semantic-card" role="button" tabindex="0" @click="openArticle(result)">
-                    <div class="dive-semantic-card__header">
-                      <span class="dive-semantic-card__thumb" aria-hidden="true" />
-                      <p class="mwf-android-type-small dive-semantic-card__trail">
-                        {{ result.title }}{{ result.sectionTitle ? ` > ${result.sectionTitle}` : '' }}
-                      </p>
-                    </div>
-                    <div class="dive-semantic-card__snippet">
-                      <span class="mwf-android-type-p dive-semantic-card__highlight">
-                        {{ result.extract ?? result.title }}
-                      </span>
-                    </div>
-                    <div class="dive-semantic-card__bottom">
-                      <span class="mwf-android-type-small dive-semantic-card__meta-item">
-                        {{ dummyMeta(result.title).contributors }} contributors
-                      </span>
-                      <span class="dive-semantic-card__meta-dot" aria-hidden="true">·</span>
-                      <span class="mwf-android-type-small dive-semantic-card__meta-item">
-                        {{ dummyMeta(result.title).references }} references
-                      </span>
-                    </div>
-                  </article>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-    </div>
   </WireframeMobileWrapper>
 </template>
 
@@ -922,14 +725,6 @@ onMounted(async () => {
   }
 }
 
-/* ── Dive sheet overlay ─────────────────────────────────────── */
-
-.focused-page-wrap {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
 
 .dive-overlay {
   position: fixed;
@@ -1037,24 +832,6 @@ onMounted(async () => {
   background: #f8f9fa;
   overflow: hidden;
   cursor: pointer;
-}
-
-.dive-semantic-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dive-semantic-card__thumb {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background:
-    linear-gradient(#c8ccd1 0 0) center 10px / 22px 2px,
-    linear-gradient(#c8ccd1 0 0) center 16px / 16px 2px,
-    linear-gradient(120deg, #eaecf0, #d4d9df);
-  background-repeat: no-repeat;
 }
 
 .dive-semantic-card__trail {

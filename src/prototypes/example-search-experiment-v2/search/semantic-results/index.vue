@@ -121,9 +121,12 @@ onMounted(() => {
               </li>
               <li v-for="result in searchResults" :key="result.title">
                 <article class="focused-search-semantic-card" role="button" tabindex="0" @click="openArticle(result)">
-                  <p class="mwf-android-type-small focused-search-semantic-card__trail">
-                    {{ result.title }}{{ result.sectionTitle ? ` > ${result.sectionTitle}` : '' }}
-                  </p>
+                  <div class="focused-search-semantic-card__header">
+                    <span class="focused-search-semantic-card__thumb" aria-hidden="true" />
+                    <p class="mwf-android-type-small focused-search-semantic-card__trail">
+                      {{ result.title }}{{ result.sectionTitle ? ` > ${result.sectionTitle}` : '' }}
+                    </p>
+                  </div>
                   <div class="focused-search-semantic-card__snippet">
                     <span class="mwf-android-type-p focused-search-semantic-card__highlight">
                       {{ result.extract ?? result.title }}
@@ -249,6 +252,24 @@ onMounted(() => {
   background: #f8f9fa;
   overflow: hidden;
   cursor: pointer;
+}
+
+.focused-search-semantic-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.focused-search-semantic-card__thumb {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background:
+    linear-gradient(#c8ccd1 0 0) center 10px / 22px 2px,
+    linear-gradient(#c8ccd1 0 0) center 16px / 16px 2px,
+    linear-gradient(120deg, #eaecf0, #d4d9df);
+  background-repeat: no-repeat;
 }
 
 .focused-search-semantic-card__trail {

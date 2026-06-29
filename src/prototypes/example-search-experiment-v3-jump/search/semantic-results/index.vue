@@ -35,7 +35,6 @@ const recentSearches = ref([
   'cat',
   'edga',
 ])
-const namespaces = ['User:', 'Portal:', 'Help:', 'Wikipedia:', 'Template:']
 const searchInput = ref<HTMLInputElement | null>(null)
 const searchQuery = ref('')
 const isSearching = ref(false)
@@ -74,6 +73,30 @@ function dummyMeta(title: string): { contributors: number; references: number } 
 }
 
 const isSkeletonVisible = ref(false)
+
+const showFeedbackSheet = ref(false)
+const hoverRating = ref(0)
+const selectedRating = ref(0)
+const feedbackText = ref('')
+const showToast = ref(false)
+
+function openFeedbackSheet() {
+  showFeedbackSheet.value = true
+}
+
+function closeFeedbackSheet() {
+  showFeedbackSheet.value = false
+}
+
+function submitFeedback() {
+  showFeedbackSheet.value = false
+  selectedRating.value = 0
+  feedbackText.value = ''
+  setTimeout(() => {
+    showToast.value = true
+    setTimeout(() => { showToast.value = false }, 3000)
+  }, 200)
+}
 
 let abortController: AbortController | null = null
 
@@ -134,7 +157,7 @@ const router = useRouter()
 
 function openArticle(result: WikiSearchResult) {
   router.push({
-    path: '/example-search-experiment-v1/article',
+    path: '/example-search-experiment-v3-jump/article',
     query: {
       article: result.title,
       ...(result.anchor ? { anchor: result.anchor } : {}),
@@ -163,11 +186,12 @@ onMounted(async () => {
 
 <template>
   <WireframeMobileWrapper>
+    <div class="ui-frame">
     <WireframeChromeWrapper active-tab="search" home-url="/example-search-experiment-v1" search-url="/example-search-experiment-v1/search/focused" class="mobile-android-type mobile-android-type--wireframe">
       <template #header>
         <header class="focused-search-header" aria-label="Focused search header">
           <RouterLink
-            to="/example-search-experiment-v1/search"
+            to="/example-search-experiment-v3-jump/search/dive-dedicated-field"
             class="focused-search-header__back"
             aria-label="Back"
           >
@@ -234,8 +258,18 @@ onMounted(async () => {
         </p>
 
         <header v-if="isShowingResults" class="focused-search-dive-header">
-          <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
           <span class="focused-search-dive-header__beta">Beta</span>
+          <div class="focused-search-dive-header__row">
+            <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
+            <button class="focused-search-dive-header__rate" type="button" aria-label="Rate results" @click="openFeedbackSheet">
+              <span class="focused-search-dive-header__rate-label">Rate results</span>
+              <span class="focused-search-dive-header__stars" aria-hidden="true">
+                <svg v-for="i in 5" :key="i" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l2.9 6.1L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7.1-1.2L12 2z" stroke="#72777d" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
+          </div>
         </header>
 
         <ul v-if="!isShowingResults" class="focused-search-content__list">
@@ -327,22 +361,51 @@ onMounted(async () => {
         </ul>
       </section>
 
-      <template #nav>
-        <footer class="focused-search-footer" aria-label="Search namespaces">
-          <div class="focused-search-footer__namespaces">
-            <span class="mwf-android-type-h4 focused-search-footer__ns-label">Namespaces</span>
+    </WireframeChromeWrapper>
+    <!-- Feedback bottom sheet -->
+    <Transition name="sheet">
+      <div v-if="showFeedbackSheet" class="feedback-sheet-backdrop" @click.self="closeFeedbackSheet">
+        <div class="feedback-sheet" role="dialog" aria-modal="true" aria-label="Rate results">
+          <div class="feedback-sheet__handle" />
+          <p class="feedback-sheet__prompt mwf-android-type-p">Rate results</p>
+          <div class="feedback-sheet__stars" role="radiogroup" aria-label="Star rating">
             <button
-              v-for="namespace in namespaces"
-              :key="namespace"
-              class="mwf-android-type-h4 focused-search-footer__ns-item"
+              v-for="i in 5"
+              :key="i"
               type="button"
+              class="feedback-sheet__star"
+              :class="{ 'feedback-sheet__star--filled': i <= (hoverRating || selectedRating) }"
+              :aria-label="`${i} star${i > 1 ? 's' : ''}`"
+              :aria-pressed="selectedRating === i"
+              @mouseenter="hoverRating = i"
+              @mouseleave="hoverRating = 0"
+              @click="selectedRating = i"
             >
-              {{ namespace }}
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l2.9 6.1L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7.1-1.2L12 2z" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
             </button>
           </div>
-        </footer>
-      </template>
-    </WireframeChromeWrapper>
+          <p class="feedback-sheet__details-label mwf-android-type-p">Add more details here (optional)</p>
+          <textarea
+            v-model="feedbackText"
+            class="feedback-sheet__textarea mwf-android-type-p"
+            rows="4"
+            placeholder=""
+          />
+          <button class="feedback-sheet__submit mwf-android-type-p" type="button" @click="submitFeedback">
+            Submit
+          </button>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="toast">
+      <div v-if="showToast" class="feedback-toast" role="status" aria-live="polite">
+        <strong>Thanks for your feedback.</strong>
+      </div>
+    </Transition>
+    </div>
   </WireframeMobileWrapper>
 </template>
 
@@ -539,7 +602,14 @@ onMounted(async () => {
 
 .focused-search-dive-header {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.focused-search-dive-header__row {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
@@ -548,6 +618,8 @@ onMounted(async () => {
 }
 
 .focused-search-dive-header__beta {
+  display: inline-block;
+  align-self: flex-start;
   padding: 2px 6px;
   border-radius: 4px;
   background: #3366cc;
@@ -558,6 +630,26 @@ onMounted(async () => {
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.focused-search-dive-header__rate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.focused-search-dive-header__rate-label {
+  font-family: var(--mobile-android-type-toolbar-font-family, sans-serif);
+  font-size: 13px;
+  color: #54595d;
+  white-space: nowrap;
+}
+
+.focused-search-dive-header__stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .focused-search-content__title {
@@ -809,5 +901,160 @@ onMounted(async () => {
 
 .focused-search-skeleton-card {
   pointer-events: none;
+}
+
+/* Rate results button */
+.focused-search-dive-header__rate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ui-frame {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Feedback bottom sheet */
+.feedback-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.32);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.feedback-sheet {
+  width: min(100%, 560px);
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 12px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.feedback-sheet__handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: #c8ccd1;
+  margin-bottom: 4px;
+}
+
+.feedback-sheet__prompt {
+  margin: 0;
+  color: #54595d;
+  align-self: flex-start;
+}
+
+.feedback-sheet__stars {
+  display: flex;
+  gap: 8px;
+}
+
+.feedback-sheet__star {
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  color: #c8ccd1;
+  line-height: 0;
+}
+
+.feedback-sheet__star svg path {
+  stroke: #c8ccd1;
+  fill: none;
+}
+
+.feedback-sheet__star--filled svg path {
+  stroke: #f0a500;
+  fill: #f0a500;
+}
+
+.feedback-sheet__details-label {
+  margin: 0;
+  align-self: flex-start;
+  color: #202122;
+}
+
+.feedback-sheet__textarea {
+  width: 100%;
+  border: 1px solid #c8ccd1;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font: inherit;
+  color: #202122;
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.feedback-sheet__textarea:focus {
+  border-color: #3366cc;
+}
+
+.feedback-sheet__submit {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #c8ccd1;
+  border-radius: 24px;
+  background: transparent;
+  color: #202122;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Toast */
+.feedback-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 528px);
+  padding: 14px 16px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #202122;
+  font-size: 15px;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.toast-enter-active { animation: toast-in 0.2s ease-out; }
+.toast-leave-active { animation: toast-in 0.15s ease-in reverse; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Sheet transition */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.sheet-enter-active .feedback-sheet,
+.sheet-leave-active .feedback-sheet {
+  transition: transform 0.25s ease;
+}
+
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-from .feedback-sheet,
+.sheet-leave-to .feedback-sheet {
+  transform: translateY(100%);
 }
 </style>

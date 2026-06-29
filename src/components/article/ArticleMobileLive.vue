@@ -106,7 +106,7 @@ function scrollToAnchor(container: HTMLElement, anchor: string, extract?: string
   setTimeout(() => {
     const rect = target.getBoundingClientRect()
     window.scrollBy({ top: rect.top - 90, behavior: 'instant' })
-  }, 2000)
+  }, 100)
 }
 
 // For articles with no anchor (e.g. Night vision lead): find the paragraph
@@ -122,7 +122,7 @@ function scrollToExtract(container: HTMLElement, extract: string) {
   setTimeout(() => {
     const rect = para.getBoundingClientRect()
     window.scrollBy({ top: rect.top - 90, behavior: 'instant' })
-  }, 2000)
+  }, 100)
 }
 
 function extractLeadImage(rawHtml: string): string | null {
