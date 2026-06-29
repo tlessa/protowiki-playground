@@ -221,15 +221,15 @@ function openArticle(result: WikiSemanticResult) {
 
 const showDive = ref(false)
 
-const showBetaMenu = ref(false)
+const betaMenuOpen = ref<'card' | 'sheet' | null>(null)
 
-function toggleBetaMenu(e: Event) {
+function toggleBetaMenu(source: 'card' | 'sheet', e: Event) {
   e.stopPropagation()
-  showBetaMenu.value = !showBetaMenu.value
+  betaMenuOpen.value = betaMenuOpen.value === source ? null : source
 }
 
 function closeBetaMenu() {
-  showBetaMenu.value = false
+  betaMenuOpen.value = null
 }
 
 interface WikiSemanticResult {
@@ -427,12 +427,12 @@ onMounted(async () => {
             <div class="focused-search-dive-card">
               <div class="focused-search-dive-card__body">
                 <span class="focused-search-dive-card__beta-wrap">
-                  <button type="button" class="mwf-android-type-small focused-search-dive-card__beta" @click.stop="toggleBetaMenu">Beta</button>
-                  <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                  <button type="button" class="mwf-android-type-small focused-search-dive-card__beta" @click.stop="(e) => toggleBetaMenu('card', e)">Beta</button>
+                  <div v-if="betaMenuOpen === 'card'" class="beta-menu" role="menu">
                     <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
                     <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
                   </div>
-                  <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                  <div v-if="betaMenuOpen === 'card'" class="beta-menu__backdrop" @click="closeBetaMenu" />
                 </span>
                 <p class="mwf-android-type-h1 focused-search-dive-card__query">{{ searchQuery.trim() }}</p>
                 <p class="mwf-android-type-p focused-search-dive-card__desc">
@@ -503,12 +503,12 @@ onMounted(async () => {
               <header class="dive-sheet__header">
                 <h2 class="mwf-android-type-h1 dive-sheet__title">Dive</h2>
                 <span class="dive-sheet__beta-wrap">
-                  <button type="button" class="dive-sheet__beta" @click.stop="toggleBetaMenu">Beta</button>
-                  <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                  <button type="button" class="dive-sheet__beta" @click.stop="(e) => toggleBetaMenu('sheet', e)">Beta</button>
+                  <div v-if="betaMenuOpen === 'sheet'" class="beta-menu" role="menu">
                     <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
                     <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
                   </div>
-                  <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                  <div v-if="betaMenuOpen === 'sheet'" class="beta-menu__backdrop" @click="closeBetaMenu" />
                 </span>
               </header>
 
