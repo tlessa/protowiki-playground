@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { cdxIconSearch } from '@wikimedia/codex-icons'
 
@@ -21,6 +21,12 @@ const router = useRouter()
 const searchQuery = ref('')
 
 const showBetaMenu = ref(false)
+const betaButtonRef = ref<HTMLElement | null>(null)
+const menuStyle = computed(() => {
+  if (!betaButtonRef.value) return {}
+  const r = betaButtonRef.value.getBoundingClientRect()
+  return { top: `${r.bottom + 4}px`, left: `${r.left}px` }
+})
 
 function toggleBetaMenu(e: Event) {
   e.stopPropagation()
@@ -54,12 +60,12 @@ const result = {
         <div class="dive-page__title-row">
           <h1 class="dive-page__title">Dive straight to the passage</h1>
           <span class="dive-page__beta-wrap">
-            <button type="button" class="dive-page__beta" @click.stop="toggleBetaMenu">Beta</button>
-            <div v-if="showBetaMenu" class="beta-menu" role="menu">
+            <button ref="betaButtonRef" type="button" class="dive-page__beta" @click.stop="toggleBetaMenu">Beta</button>
+            <div v-if="showBetaMenu" class="beta-menu" :style="menuStyle" role="menu">
               <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
               <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
             </div>
-            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click.stop="closeBetaMenu" />
           </span>
         </div>
       </header>
@@ -168,9 +174,7 @@ const result = {
 }
 
 .beta-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  position: fixed;
   z-index: 200;
   min-width: 220px;
   background: #fff;

@@ -273,6 +273,18 @@ const historyGroups: HistoryGroup[] = [
 .search-surface__dive-icon {
   font-size: 16px;
   line-height: 1;
+  display: inline-block;
+  animation: icon-wiggle 0.6s ease 0.4s both;
+  transform-origin: center;
+}
+
+@keyframes icon-wiggle {
+  0%   { transform: rotate(0deg); }
+  20%  { transform: rotate(-18deg); }
+  40%  { transform: rotate(14deg); }
+  60%  { transform: rotate(-10deg); }
+  80%  { transform: rotate(6deg); }
+  100% { transform: rotate(0deg); }
 }
 
 .search-surface__dive-label {

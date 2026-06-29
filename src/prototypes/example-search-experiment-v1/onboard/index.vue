@@ -387,6 +387,7 @@ function getStarted() {
   display: flex;
   gap: 8px;
   align-items: center;
+  padding-bottom: 40px;
 }
 
 .onboard__dot {
