@@ -132,6 +132,23 @@ function selectLanguage(lang: 'en' | 'pt' | 'es') {
 
 const router = useRouter()
 
+const showBetaMenu = ref(false)
+const betaButtonRef = ref<HTMLElement | null>(null)
+const betaMenuStyle = computed(() => {
+  if (!betaButtonRef.value) return {}
+  const r = betaButtonRef.value.getBoundingClientRect()
+  return { top: `${r.bottom + 4}px`, left: `${r.left}px` }
+})
+
+function toggleBetaMenu(e: Event) {
+  e.stopPropagation()
+  showBetaMenu.value = !showBetaMenu.value
+}
+
+function closeBetaMenu() {
+  showBetaMenu.value = false
+}
+
 function openArticle(result: WikiSearchResult) {
   router.push({
     path: '/example-search-experiment-v1/article',
@@ -235,7 +252,14 @@ onMounted(async () => {
 
         <header v-if="isShowingResults" class="focused-search-dive-header">
           <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
-          <span class="focused-search-dive-header__beta">Beta</span>
+          <span class="focused-search-dive-header__beta-wrap">
+            <button ref="betaButtonRef" type="button" class="focused-search-dive-header__beta" @click.stop="toggleBetaMenu">Beta</button>
+            <div v-if="showBetaMenu" class="beta-menu" :style="betaMenuStyle" role="menu">
+              <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+              <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+            </div>
+            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click.stop="closeBetaMenu" />
+          </span>
         </header>
 
         <ul v-if="!isShowingResults" class="focused-search-content__list">
@@ -547,6 +571,10 @@ onMounted(async () => {
   margin: 0;
 }
 
+.focused-search-dive-header__beta-wrap {
+  position: relative;
+}
+
 .focused-search-dive-header__beta {
   padding: 2px 6px;
   border-radius: 4px;
@@ -558,6 +586,44 @@ onMounted(async () => {
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  border: 0;
+  cursor: pointer;
+}
+
+.beta-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 220px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
+  overflow: hidden;
+}
+
+.beta-menu__item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  font-size: 16px;
+  color: #202122;
+  cursor: pointer;
+}
+
+.beta-menu__item:hover {
+  background: #f8f9fa;
+}
+
+.beta-menu__item--danger {
+  color: #d33;
+}
+
+.beta-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
 }
 
 .focused-search-content__title {
