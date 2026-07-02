@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
@@ -12,11 +12,36 @@ definePage({
   },
 })
 
+// window survives HMR reloads (unlike module vars) and resets on page refresh (unlike sessionStorage)
+const w = window as Window & { _v2Visits?: number; _v2CardTapped?: boolean; _v2ToastShown?: boolean }
+
 const router = useRouter()
 
 const searchQuery = ref('')
 const searchError = ref('')
 const selectedLanguage = ref<'en' | 'pt' | 'es'>('en')
+
+const showFeedbackToast = ref(false)
+const feedbackToastThumb = ref<'up' | 'down' | null>(null)
+const feedbackToastExpanded = ref(false)
+const feedbackToastText = ref('')
+const showThanksToast = ref(false)
+let thanksTimer: ReturnType<typeof setTimeout> | null = null
+
+function selectThumb(thumb: 'up' | 'down') {
+  feedbackToastThumb.value = thumb
+  showFeedbackToast.value = false
+  showThanksToast.value = true
+  if (thanksTimer) clearTimeout(thanksTimer)
+  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
+}
+
+function submitFeedbackToast() {
+  showFeedbackToast.value = false
+  showThanksToast.value = true
+  if (thanksTimer) clearTimeout(thanksTimer)
+  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
+}
 
 interface WikiSearchResult {
   title: string
@@ -56,7 +81,16 @@ function scheduleSearch(_query: string) {
   searchResults.value = HARDCODED_RESULTS
 }
 
+function checkFeedbackTrigger() {
+  w._v2Visits = (w._v2Visits ?? 0) + 1
+  if (w._v2Visits >= 2 && !w._v2CardTapped && !w._v2ToastShown) {
+    w._v2ToastShown = true
+    showFeedbackToast.value = true
+  }
+}
+
 function openArticle(result: WikiSearchResult) {
+  w._v2CardTapped = true
   router.push({
     path: '/example-search-experiment-v2/article',
     query: {
@@ -77,6 +111,12 @@ onMounted(() => {
     searchQuery.value = routeQuery
     scheduleSearch(routeQuery)
   }
+  checkFeedbackTrigger()
+})
+
+// Catches re-navigation to this page when Vue Router reuses the component instance
+watch(() => route.fullPath, () => {
+  checkFeedbackTrigger()
 })
 </script>
 
@@ -130,9 +170,7 @@ onMounted(() => {
                     </p>
                   </div>
                   <div class="focused-search-semantic-card__snippet">
-                    <span class="mwf-android-type-p focused-search-semantic-card__highlight">
-                      {{ result.extract ?? result.title }}
-                    </span>
+                    <span class="mwf-android-type-p focused-search-semantic-card__highlight"><span class="focused-search-semantic-card__quote" aria-hidden="true">&#x201C;</span>{{ result.extract ?? result.title }}</span>
                   </div>
                   <div class="focused-search-semantic-card__bottom">
                     <span class="mwf-android-type-small focused-search-semantic-card__meta-item">
@@ -150,6 +188,61 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <Transition name="feedback-toast">
+      <div v-if="showFeedbackToast" class="feedback-toast" role="dialog" aria-label="Feedback">
+        <div class="feedback-toast__top-row">
+          <span class="feedback-toast__label">Did you find what you were looking for?</span>
+          <div class="feedback-toast__thumbs">
+            <button
+              type="button"
+              class="feedback-toast__thumb"
+              :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'up' }"
+              aria-label="Yes"
+              @click="selectThumb('up')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="feedback-toast__thumb"
+              :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'down' }"
+              aria-label="No"
+              @click="selectThumb('down')"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button type="button" class="feedback-toast__details-row" @click="feedbackToastExpanded = !feedbackToastExpanded">
+          <span class="feedback-toast__details-label">Add more details here (optional)</span>
+          <svg
+            class="feedback-toast__chevron"
+            :class="{ 'feedback-toast__chevron--open': feedbackToastExpanded }"
+            width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+          >
+            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <textarea
+          v-if="feedbackToastExpanded"
+          v-model="feedbackToastText"
+          class="feedback-toast__textarea"
+          rows="3"
+        />
+        <button type="button" class="feedback-toast__submit" @click="submitFeedbackToast">Submit</button>
+      </div>
+    </Transition>
+
+    <Transition name="thanks-toast">
+      <div v-if="showThanksToast" class="thanks-toast" role="status" aria-live="polite">
+        Thanks for your feedback.
+      </div>
+    </Transition>
   </WireframeMobileWrapper>
 </template>
 
@@ -258,7 +351,6 @@ onMounted(() => {
   border-radius: 16px;
   border: 1px solid #c8ccd1;
   background: #f8f9fa;
-  overflow: hidden;
   cursor: pointer;
 }
 
@@ -288,6 +380,15 @@ onMounted(() => {
 .focused-search-semantic-card__snippet {
   display: grid;
   gap: 2px;
+}
+
+.focused-search-semantic-card__quote {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 0;
+  vertical-align: -0.15em;
+  color: #202122;
+  user-select: none;
 }
 
 .focused-search-semantic-card__highlight {
@@ -345,4 +446,147 @@ onMounted(() => {
   pointer-events: none;
 }
 
+/* Feedback toast */
+.feedback-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 32px), 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  border: 1.5px solid #c8ccd1;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.14);
+  z-index: 300;
+  pointer-events: all;
+}
+
+.feedback-toast__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feedback-toast__label {
+  font-size: 15px;
+  line-height: 1.4;
+  color: #202122;
+  flex: 1;
+}
+
+.feedback-toast__thumbs {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.feedback-toast__thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid #c8ccd1;
+  background: #fff;
+  color: #54595d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.feedback-toast__thumb--active {
+  border-color: #3366cc;
+  color: #3366cc;
+  background: #eaf0fb;
+}
+
+.feedback-toast__details-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.feedback-toast__details-label {
+  font-size: 15px;
+  color: #202122;
+}
+
+.feedback-toast__chevron {
+  color: #54595d;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.feedback-toast__chevron--open {
+  transform: rotate(90deg);
+}
+
+.feedback-toast__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #c8ccd1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #202122;
+  resize: none;
+  outline: none;
+}
+
+.feedback-toast__textarea:focus {
+  border-color: #3366cc;
+}
+
+.feedback-toast__submit {
+  align-self: center;
+  padding: 10px 32px;
+  border: 1.5px solid #c8ccd1;
+  border-radius: 999px;
+  background: #fff;
+  color: #202122;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.feedback-toast-enter-active { animation: toast-in 0.2s ease-out; }
+.feedback-toast-leave-active { animation: toast-in 0.15s ease-in reverse; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.thanks-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  border-radius: 8px;
+  background: #202122;
+  color: #fff;
+  font-size: 14px;
+  z-index: 400;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.thanks-toast-enter-active { animation: thanks-in 0.2s ease-out; }
+.thanks-toast-leave-active { animation: thanks-in 0.15s ease-in reverse; }
+@keyframes thanks-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 </style>

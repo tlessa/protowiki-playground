@@ -54,28 +54,19 @@ const result = {
     <div class="dive-page">
 
       <header class="dive-page__header">
-        <div class="dive-page__top-row">
-          <span class="dive-page__beta">Beta</span>
-          <span class="dive-page__gear-wrap">
-            <button ref="betaButtonRef" type="button" class="dive-page__gear" aria-label="Settings" @click.stop="toggleBetaMenu">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
+        <button class="dive-page__back" type="button" aria-label="Go back" @click="router.push('/example-search-experiment-v3-jump/search')">
+          <span class="dive-page__back-arrow" aria-hidden="true" />
+        </button>
+        <div class="dive-page__title-row">
+          <h1 class="dive-page__title">Dive straight to the passage</h1>
+          <span class="dive-page__beta-wrap">
+            <button ref="betaButtonRef" type="button" class="dive-page__beta" @click.stop="toggleBetaMenu">Beta</button>
             <div v-if="showBetaMenu" class="beta-menu" :style="menuStyle" role="menu">
               <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
-              <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Hide feature</button>
-              <p class="beta-menu__helper">You can make it visible again via Settings</p>
+              <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
             </div>
             <div v-if="showBetaMenu" class="beta-menu__backdrop" @click.stop="closeBetaMenu" />
           </span>
-        </div>
-        <div class="dive-page__title-row">
-          <button class="dive-page__back" type="button" aria-label="Go back" @click="router.push('/example-search-experiment-v3-jump/search')">
-            <span class="dive-page__back-arrow" aria-hidden="true" />
-          </button>
-          <h1 class="dive-page__title">Dive straight to the passage</h1>
         </div>
       </header>
 
@@ -151,43 +142,28 @@ const result = {
 /* Header */
 .dive-page__header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dive-page__top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .dive-page__title-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
 }
 
-.dive-page__gear-wrap {
+.dive-page__beta-wrap {
   position: relative;
   flex-shrink: 0;
-}
-
-.dive-page__gear {
-  background: none;
-  border: 0;
-  padding: 4px;
-  cursor: pointer;
-  color: #72777d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin-top: 6px;
 }
 
 .dive-page__beta {
   display: inline-block;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #8a8f95;
+  background: #3366cc;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -205,7 +181,6 @@ const result = {
   border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12);
   overflow: hidden;
-  font-family: 'Klee One', var(--font-family-base, sans-serif);
 }
 
 .beta-menu__item {
@@ -226,14 +201,6 @@ const result = {
 
 .beta-menu__item--danger {
   color: #d33;
-  padding-bottom: 4px;
-}
-
-.beta-menu__helper {
-  margin: 0;
-  padding: 0 16px 10px;
-  font-size: 12px;
-  color: #72777d;
 }
 
 .beta-menu__backdrop {

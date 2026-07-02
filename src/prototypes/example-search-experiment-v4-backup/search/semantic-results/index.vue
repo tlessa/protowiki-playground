@@ -85,34 +85,34 @@ function closeBetaMenu() {
   showBetaMenu.value = false
 }
 
+const showFeedbackSheet = ref(false)
+const hoverRating = ref(0)
+const selectedRating = ref(0)
+const feedbackText = ref('')
+const showToast = ref(false)
+
+function openFeedbackSheet() {
+  showFeedbackSheet.value = true
+}
+
+function closeFeedbackSheet() {
+  showFeedbackSheet.value = false
+}
+
+function submitFeedback() {
+  showFeedbackSheet.value = false
+  selectedRating.value = 0
+  feedbackText.value = ''
+  setTimeout(() => {
+    showToast.value = true
+    setTimeout(() => { showToast.value = false }, 3000)
+  }, 200)
+}
 
 let abortController: AbortController | null = null
 
 const isShowingResults = computed(() => searchQuery.value.trim().length > 0)
 
-const showFeedbackToast = ref(false)
-const feedbackToastThumb = ref<'up' | 'down' | null>(null)
-const feedbackToastExpanded = ref(false)
-const feedbackToastText = ref('')
-const showThanksToast = ref(false)
-let thanksTimer: ReturnType<typeof setTimeout> | null = null
-
-const w = window as Window & { _v3Visits?: number; _v3CardTapped?: boolean; _v3ToastShown?: boolean }
-
-function selectThumb(thumb: 'up' | 'down') {
-  feedbackToastThumb.value = thumb
-  showFeedbackToast.value = false
-  showThanksToast.value = true
-  if (thanksTimer) clearTimeout(thanksTimer)
-  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
-}
-
-function submitFeedbackToast() {
-  showFeedbackToast.value = false
-  showThanksToast.value = true
-  if (thanksTimer) clearTimeout(thanksTimer)
-  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
-}
 
 function scheduleSearch(_query: string) {
   searchResults.value = HARDCODED_RESULTS
@@ -167,7 +167,6 @@ function selectLanguage(lang: 'en' | 'pt' | 'es') {
 const router = useRouter()
 
 function openArticle(result: WikiSearchResult) {
-  w._v3CardTapped = true
   router.push({
     path: '/example-search-experiment-v3-jump/article',
     query: {
@@ -192,15 +191,6 @@ onMounted(async () => {
   if (searchInput.value) {
     searchInput.value.value = routeQuery
     searchInput.value.focus()
-  }
-
-  w._v3Visits = (w._v3Visits ?? 0) + 1
-  if (w._v3Visits >= 2 && !w._v3CardTapped && !w._v3ToastShown) {
-    w._v3ToastShown = true
-    feedbackToastThumb.value = null
-    feedbackToastExpanded.value = false
-    feedbackToastText.value = ''
-    showFeedbackToast.value = true
   }
 })
 </script>
@@ -289,6 +279,14 @@ onMounted(async () => {
           </span>
           <div class="focused-search-dive-header__row">
             <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
+            <button class="focused-search-dive-header__rate" type="button" aria-label="Rate results" @click="openFeedbackSheet">
+              <span class="focused-search-dive-header__rate-label">Rate results</span>
+              <span class="focused-search-dive-header__stars" aria-hidden="true">
+                <svg v-for="i in 5" :key="i" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2l2.9 6.1L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7.1-1.2L12 2z" stroke="#72777d" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
           </div>
         </header>
 
@@ -380,41 +378,50 @@ onMounted(async () => {
       </section>
 
     </WireframeChromeWrapper>
-    </div>
-
-    <Transition name="feedback-toast">
-      <div v-if="showFeedbackToast" class="feedback-toast" role="dialog" aria-label="Feedback">
-        <div class="feedback-toast__top-row">
-          <span class="feedback-toast__label">Did you find what you were looking for?</span>
-          <div class="feedback-toast__thumbs">
-            <button type="button" class="feedback-toast__thumb" :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'up' }" aria-label="Yes" @click="selectThumb('up')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button type="button" class="feedback-toast__thumb" :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'down' }" aria-label="No" @click="selectThumb('down')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Feedback bottom sheet -->
+    <Transition name="sheet">
+      <div v-if="showFeedbackSheet" class="feedback-sheet-backdrop" @click.self="closeFeedbackSheet">
+        <div class="feedback-sheet" role="dialog" aria-modal="true" aria-label="Rate results">
+          <div class="feedback-sheet__handle" />
+          <p class="feedback-sheet__prompt mwf-android-type-p">Rate results</p>
+          <div class="feedback-sheet__stars" role="radiogroup" aria-label="Star rating">
+            <button
+              v-for="i in 5"
+              :key="i"
+              type="button"
+              class="feedback-sheet__star"
+              :class="{ 'feedback-sheet__star--filled': i <= (hoverRating || selectedRating) }"
+              :aria-label="`${i} star${i > 1 ? 's' : ''}`"
+              :aria-pressed="selectedRating === i"
+              @mouseenter="hoverRating = i"
+              @mouseleave="hoverRating = 0"
+              @click="selectedRating = i"
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2l2.9 6.1L22 9.3l-5 4.9 1.2 6.8L12 17.8l-6.2 3.2L7 14.2 2 9.3l7.1-1.2L12 2z" stroke-width="1.5" stroke-linejoin="round"/>
               </svg>
             </button>
           </div>
+          <p class="feedback-sheet__details-label mwf-android-type-p">Add more details here (optional)</p>
+          <textarea
+            v-model="feedbackText"
+            class="feedback-sheet__textarea mwf-android-type-p"
+            rows="4"
+            placeholder=""
+          />
+          <button class="feedback-sheet__submit mwf-android-type-p" type="button" @click="submitFeedback">
+            Submit
+          </button>
         </div>
-        <button type="button" class="feedback-toast__details-row" @click="feedbackToastExpanded = !feedbackToastExpanded">
-          <span class="feedback-toast__details-label">Add more details here (optional)</span>
-          <svg class="feedback-toast__chevron" :class="{ 'feedback-toast__chevron--open': feedbackToastExpanded }" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <textarea v-if="feedbackToastExpanded" v-model="feedbackToastText" class="feedback-toast__textarea" rows="3" />
-        <button type="button" class="feedback-toast__submit" @click="submitFeedbackToast">Submit</button>
       </div>
     </Transition>
 
-    <Transition name="thanks-toast">
-      <div v-if="showThanksToast" class="thanks-toast" role="status" aria-live="polite">
-        Thanks for your feedback.
+    <Transition name="toast">
+      <div v-if="showToast" class="feedback-toast" role="status" aria-live="polite">
+        <strong>Thanks for your feedback.</strong>
       </div>
     </Transition>
+    </div>
   </WireframeMobileWrapper>
 </template>
 
@@ -1119,148 +1126,5 @@ onMounted(async () => {
 .sheet-enter-from .feedback-sheet,
 .sheet-leave-to .feedback-sheet {
   transform: translateY(100%);
-}
-
-.feedback-toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(calc(100% - 32px), 480px);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px 16px;
-  border-radius: 16px;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.14);
-  z-index: 300;
-  pointer-events: all;
-}
-
-.feedback-toast__top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.feedback-toast__label {
-  font-size: 15px;
-  line-height: 1.4;
-  color: #202122;
-  flex: 1;
-}
-
-.feedback-toast__thumbs {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.feedback-toast__thumb {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  color: #54595d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.feedback-toast__thumb--active {
-  border-color: #3366cc;
-  color: #3366cc;
-  background: #eaf0fb;
-}
-
-.feedback-toast__details-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-}
-
-.feedback-toast__details-label {
-  font-size: 15px;
-  color: #202122;
-}
-
-.feedback-toast__chevron {
-  color: #54595d;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.feedback-toast__chevron--open {
-  transform: rotate(90deg);
-}
-
-.feedback-toast__textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1.5px solid #c8ccd1;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 15px;
-  font-family: inherit;
-  color: #202122;
-  resize: none;
-  outline: none;
-}
-
-.feedback-toast__textarea:focus {
-  border-color: #3366cc;
-}
-
-.feedback-toast__submit {
-  align-self: center;
-  padding: 10px 32px;
-  border: 1.5px solid #c8ccd1;
-  border-radius: 999px;
-  background: #fff;
-  color: #202122;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.feedback-toast-enter-active { animation: toast-in 0.2s ease-out; }
-.feedback-toast-leave-active { animation: toast-in 0.15s ease-in reverse; }
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-.thanks-toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 14px 20px;
-  border-radius: 8px;
-  background: #202122;
-  color: #fff;
-  font-size: 14px;
-  z-index: 400;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.thanks-toast-enter-active { animation: thanks-in 0.2s ease-out; }
-.thanks-toast-leave-active { animation: thanks-in 0.15s ease-in reverse; }
-@keyframes thanks-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 </style>

@@ -1,24 +1,19 @@
 <script setup lang="ts">
 definePage({
   meta: {
-    title: '[deprecated]Example: Semantic Search Exploration 1',
-    description: 'Semantic search: explicit path on results display',
+    title: '[deprecated] Example: Semantic Search Exploration 4 - Jump',
+    description: 'Semantic search: Jump/Dive',
   },
 })
 
-import { onMounted } from 'vue'
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
 import '@/styles/mobile-android/index.css'
-
-onMounted(() => {
-  localStorage.removeItem('v1-search-onboarded')
-})
 </script>
 
 <template>
   <WireframeMobileWrapper>
-    <WireframeChromeWrapper active-tab="home" home-url="/example-search-experiment-v1" search-url="/example-search-experiment-v1/search" class="mobile-android-type mobile-android-type--wireframe">
+    <WireframeChromeWrapper active-tab="home" home-url="/example-search-experiment-v3-jump/community" search-url="/example-search-experiment-v3-jump/search" class="mobile-android-type mobile-android-type--wireframe">
       <template #header>
         <header class="home-header" aria-label="App header">
             <!--  Wikipedia logo -->
