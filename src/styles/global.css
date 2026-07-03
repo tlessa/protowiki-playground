@@ -19,6 +19,123 @@
  * follow.
  */
 
+/* ---------- Fidelity / platform scaffolding ---------- */
+
+/*
+ * Wireframe now uses tokenized neutral colors instead of a global grayscale
+ * filter so highlight yellow and media content keep their original color.
+ */
+
+/* Semantic appearance tokens (structure/layout remains in component CSS). */
+:root {
+  --proto-ui-font-family: var(--font-family-system-sans, system-ui, sans-serif);
+
+  --proto-shell-gradient-start: rgba(234, 236, 240, 0.9);
+  --proto-shell-gradient-mid: rgba(248, 249, 250, 0.96);
+  --proto-shell-gradient-end: #eef1f4;
+  --proto-shell-column-bg: var(--background-color-base, #fff);
+  --proto-shell-column-border: rgba(162, 169, 177, 0.4);
+
+  --proto-chrome-status-color: #6b7280;
+  --proto-chrome-nav-active-pill-bg: #e5e5e5;
+
+  --proto-card-bg: #f8f9fa;
+  --proto-card-border: #c8ccd1;
+  --proto-card-thumb-line: #c8ccd1;
+  --proto-card-thumb-grad-start: #eaecf0;
+  --proto-card-thumb-grad-end: #d4d9df;
+  --proto-card-trail: #72777d;
+  --proto-card-quote: #202122;
+  --proto-card-highlight-bg: #ece7a5;
+  --proto-card-highlight-text: #202122;
+  --proto-card-faded: #a2a9b1;
+  --proto-card-bottom-border: #eaecf0;
+  --proto-card-meta: #72777d;
+  --proto-card-meta-dot: #c8ccd1;
+}
+
+html[data-fidelity='wireframe'] {
+  --proto-ui-font-family: 'Klee One', var(--font-family-base, sans-serif);
+
+  --proto-shell-gradient-start: #eeeeee;
+  --proto-shell-gradient-mid: #f4f4f4;
+  --proto-shell-gradient-end: #e6e6e6;
+  --proto-shell-column-bg: #ffffff;
+  --proto-shell-column-border: rgba(120, 120, 120, 0.45);
+
+  --proto-chrome-status-color: #5f5f5f;
+  --proto-chrome-nav-active-pill-bg: #dfdfdf;
+
+  --proto-card-bg: #f2f2f2;
+  --proto-card-border: #b6b6b6;
+  --proto-card-thumb-line: #9d9d9d;
+  --proto-card-thumb-grad-start: #d6d6d6;
+  --proto-card-thumb-grad-end: #c8c8c8;
+  --proto-card-trail: #666666;
+  --proto-card-quote: #303030;
+  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-text: #232323;
+  --proto-card-faded: #7c7c7c;
+  --proto-card-bottom-border: #cfcfcf;
+  --proto-card-meta: #666666;
+  --proto-card-meta-dot: #8c8c8c;
+}
+
+html[data-fidelity='high'][data-platform='android'] {
+  --proto-ui-font-family: 'Roboto', var(--font-family-base, sans-serif);
+
+  --proto-shell-gradient-start: rgba(234, 236, 240, 0.9);
+  --proto-shell-gradient-mid: rgba(248, 249, 250, 0.96);
+  --proto-shell-gradient-end: #eef1f4;
+  --proto-shell-column-bg: #ffffff;
+  --proto-shell-column-border: rgba(162, 169, 177, 0.4);
+
+  --proto-chrome-status-color: #72777d;
+  --proto-chrome-nav-active-pill-bg: #eaecf0;
+
+  --proto-card-bg: #ffffff;
+  --proto-card-border: #eaecf0;
+  --proto-card-thumb-line: #c8ccd1;
+  --proto-card-thumb-grad-start: #eaecf0;
+  --proto-card-thumb-grad-end: #d4d9df;
+  --proto-card-trail: #72777d;
+  --proto-card-quote: #202122;
+  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-text: #202122;
+  --proto-card-faded: #a2a9b1;
+  --proto-card-bottom-border: #eaecf0;
+  --proto-card-meta: #54595d;
+  --proto-card-meta-dot: #a2a9b1;
+}
+
+html[data-fidelity='high'][data-platform='ios'] {
+  --proto-ui-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+
+  --proto-shell-gradient-start: rgba(234, 236, 240, 0.9);
+  --proto-shell-gradient-mid: rgba(248, 249, 250, 0.96);
+  --proto-shell-gradient-end: #eef1f4;
+  --proto-shell-column-bg: #ffffff;
+  --proto-shell-column-border: rgba(162, 169, 177, 0.35);
+
+  --proto-chrome-status-color: #72777d;
+  --proto-chrome-nav-active-pill-bg: rgba(51, 102, 204, 0.1);
+
+  --proto-card-bg: #f8f9fa;
+  --proto-card-border: #c8ccd1;
+  --proto-card-thumb-line: #c8ccd1;
+  --proto-card-thumb-grad-start: #eaecf0;
+  --proto-card-thumb-grad-end: #d4d9df;
+  --proto-card-trail: #72777d;
+  --proto-card-quote: #202122;
+  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-text: #202122;
+  --proto-card-faded: #a2a9b1;
+  --proto-card-bottom-border: #eaecf0;
+  --proto-card-meta: #72777d;
+  --proto-card-meta-dot: #c8ccd1;
+}
+
 /* ---------- Tiny reset ---------- */
 
 *,

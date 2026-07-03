@@ -351,7 +351,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   min-height: 64px;
   padding: 8px 12px 10px;
   background: #fff;
@@ -392,7 +392,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 48px;
+  min-height: var(--mobile-android-size-list-item-height);
 }
 
 .focused-search-header__input {
@@ -588,7 +588,7 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.focused-search-content__dive-badge { display: inline-flex; align-items: center; width: fit-content; gap: 8px; padding: 3px 12px; border-radius: 10px; background: #8a8f95; color: #fff; }
+.focused-search-content__dive-badge { display: inline-flex; align-items: center; width: fit-content; gap: var(--mobile-android-space-sm); padding: 3px 12px; border-radius: 10px; background: #8a8f95; color: #fff; }
 .focused-search-content__dive-badge svg { display: block; width: 12px; height: 12px; }
 
 .focused-search-dive-card-item {
@@ -611,16 +611,18 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   flex: 1 1 auto;
   min-width: 0;
 }
 
 .focused-search-dive-card__beta {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 6px;
-  background: #8a8f95;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--progressive, #36C);
   color: #fff;
 }
 
@@ -689,7 +691,7 @@ onMounted(async () => {
 
 .focused-search-footer__namespaces {
   display: flex;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   align-items: center;
   min-height: 44px;
   padding: 0 12px;
@@ -792,7 +794,7 @@ onMounted(async () => {
 .dive-sheet__header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .dive-sheet__title {
@@ -800,9 +802,12 @@ onMounted(async () => {
 }
 
 .dive-sheet__beta {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #3366cc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--progressive, #36C);
   color: #fff;
   font-size: 10px;
   font-weight: 700;

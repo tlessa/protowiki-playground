@@ -115,7 +115,7 @@ import '@/styles/mobile-android/index.css'
   align-items: center;
   justify-content: space-between;
   min-height: 64px;
-  padding: 8px 16px;
+  padding: var(--mobile-android-space-sm) var(--mobile-android-space-md);
   background: #fff;
   border-bottom: 1px solid #eaecf0;
 }
@@ -151,7 +151,7 @@ import '@/styles/mobile-android/index.css'
   position: absolute;
   inset-block-end: 6px;
   inset-inline-start: 5px;
-  width: 24px;
+  width: var(--mobile-android-size-icon);
   height: 2px;
   background: #202122;
   border-radius: 2px;
@@ -179,7 +179,7 @@ import '@/styles/mobile-android/index.css'
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   padding: 8px 16px 0;
   border: 0;
   background: transparent;
@@ -257,7 +257,7 @@ import '@/styles/mobile-android/index.css'
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .community-banner__line {
@@ -280,7 +280,7 @@ import '@/styles/mobile-android/index.css'
 .community-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .community-section__date {
@@ -345,7 +345,7 @@ import '@/styles/mobile-android/index.css'
   inset-block-start: 12px;
   inset-inline-end: 12px;
   display: inline-flex;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .community-card__action-btn {

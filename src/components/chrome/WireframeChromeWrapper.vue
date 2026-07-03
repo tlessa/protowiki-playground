@@ -148,7 +148,8 @@ const props = withDefaults(defineProps<Props>(), {
   min-height: 24px;
   padding: max(4px, env(safe-area-inset-top, 0px)) 12px 4px;
   background-color: var(--background-color-base, #fff);
-  color: #6b7280;
+  color: var(--proto-chrome-status-color);
+  font-family: var(--proto-ui-font-family);
   font-size: 12px;
   line-height: 1;
 }
@@ -245,7 +246,7 @@ const props = withDefaults(defineProps<Props>(), {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--mobile-android-size-nav-bar-height, 72px) + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-chrome-wrapper__nav {
@@ -267,7 +268,7 @@ const props = withDefaults(defineProps<Props>(), {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  min-height: 52px;
+  min-height: var(--mobile-android-size-list-item-height, 48px);
   padding: 0;
   border: 0;
   background: transparent;
@@ -293,7 +294,7 @@ const props = withDefaults(defineProps<Props>(), {
 }
 
 .mobile-chrome-wrapper__nav-item--active .mobile-chrome-wrapper__nav-icon-shell {
-  background: #e5e5e5;
+  background: var(--proto-chrome-nav-active-pill-bg);
 }
 
 .mobile-chrome-wrapper__nav-item :deep(svg),

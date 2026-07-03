@@ -9,6 +9,14 @@
  * - High-fidelity font set: `.mobile-android-type--high-fidelity`
  */
 .mobile-android-type {
+  --mobile-android-space-sm: 8px;
+  --mobile-android-space-md: 16px;
+  --mobile-android-size-list-item-height: 48px;
+  --mobile-android-size-section-header-height: 56px;
+  --mobile-android-size-nav-bar-height: 72px;
+  --mobile-android-size-thumbnail: 56px;
+  --mobile-android-size-icon: 24px;
+
   --mobile-android-type-h1-font-family: 'Roboto', var(--font-family-base, sans-serif);
   --mobile-android-type-h1-font-size: 24px;
   --mobile-android-type-h1-font-weight: 700;
@@ -156,6 +164,85 @@
     --font-family-base,
     sans-serif
   );
+}
+
+/*
+ * Global mode selectors let existing templates keep their current class names
+ * while switching between wireframe and high-fidelity via URL params.
+ */
+html[data-fidelity='high'][data-platform='android']
+  .mobile-android-type.mobile-android-type--wireframe,
+html[data-fidelity='high'][data-platform='android']
+  .mobile-android-type.mobile-android-type--high-fidelity {
+  --mobile-android-type-h1-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h1-app-bar-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h1-article-font-family: 'Droid Serif', var(
+    --font-family-serif,
+    serif
+  );
+  --mobile-android-type-h2-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h2-app-bar-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h3-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h3-button-font-family: 'Roboto', var(
+    --font-family-base,
+    sans-serif
+  );
+  --mobile-android-type-h3-article-font-family: 'Droid Serif', var(
+    --font-family-serif,
+    serif
+  );
+  --mobile-android-type-h4-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-h5-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-p-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-p-article-font-family: 'Roboto', var(
+    --font-family-base,
+    sans-serif
+  );
+  --mobile-android-type-chip-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-list-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-small-font-family: 'Roboto', var(--font-family-base, sans-serif);
+  --mobile-android-type-toolbar-font-family: 'Roboto', var(
+    --font-family-base,
+    sans-serif
+  );
+}
+
+html[data-fidelity='high'][data-platform='ios']
+  .mobile-android-type.mobile-android-type--wireframe,
+html[data-fidelity='high'][data-platform='ios']
+  .mobile-android-type.mobile-android-type--high-fidelity {
+  --mobile-android-type-h1-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h1-app-bar-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h1-article-font-family: 'New York', Georgia, 'Times New Roman',
+    serif;
+  --mobile-android-type-h2-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h2-app-bar-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h3-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h3-button-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h3-article-font-family: 'New York', Georgia, 'Times New Roman',
+    serif;
+  --mobile-android-type-h4-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-h5-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-p-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-p-article-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-chip-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-list-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-small-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  --mobile-android-type-toolbar-font-family: -apple-system, BlinkMacSystemFont,
+    'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .mwf-android-type-h1 {

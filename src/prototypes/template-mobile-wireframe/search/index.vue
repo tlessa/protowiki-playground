@@ -237,10 +237,14 @@ const historyGroups: HistoryGroup[] = [
 }
 
 .search-surface__mic {
+  display: inline-block;
+  box-sizing: border-box;
+  flex-shrink: 0;
   position: relative;
   width: 10px;
   height: 18px;
-  border: 2px solid #72777d;
+  color: #72777d;
+  border: 2px solid currentColor;
   border-radius: 999px;
   border-bottom: 0;
 }
@@ -257,7 +261,8 @@ const historyGroups: HistoryGroup[] = [
   inset-block-end: -7px;
   width: 10px;
   height: 6px;
-  border: 2px solid #72777d;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
   border-top: 0;
   border-radius: 0 0 999px 999px;
 }
@@ -266,7 +271,7 @@ const historyGroups: HistoryGroup[] = [
   inset-block-end: -11px;
   width: 2px;
   height: 5px;
-  background: #72777d;
+  background: currentColor;
   border-radius: 999px;
 }
 

@@ -6,6 +6,8 @@ import { cdxIconSearch } from '@wikimedia/codex-icons'
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
 import AppIcon from '@/components/AppIcon.vue'
+import BetaBadge from '@/components/BetaBadge.vue'
+import SemanticResultCard from '@/components/SemanticResultCard.vue'
 import { MATERIAL_ICON_PATHS } from '@/lib/materialIconPaths'
 import '@/styles/mobile-android/index.css'
 
@@ -25,7 +27,20 @@ const betaButtonRef = ref<HTMLElement | null>(null)
 const menuStyle = computed(() => {
   if (!betaButtonRef.value) return {}
   const r = betaButtonRef.value.getBoundingClientRect()
-  return { top: `${r.bottom + 4}px`, left: `${r.left}px` }
+
+  const margin = 8
+  const estimatedMenuWidth = 240
+  const estimatedMenuHeight = 170
+
+  const maxLeft = Math.max(margin, window.innerWidth - estimatedMenuWidth - margin)
+  const left = Math.min(Math.max(r.left, margin), maxLeft)
+
+  let top = r.bottom + 4
+  if (top + estimatedMenuHeight > window.innerHeight - margin) {
+    top = Math.max(margin, r.top - estimatedMenuHeight - 4)
+  }
+
+  return { top: `${top}px`, left: `${left}px` }
 })
 
 function toggleBetaMenu(e: Event) {
@@ -37,7 +52,22 @@ function closeBetaMenu() {
   showBetaMenu.value = false
 }
 
-const sampleQuery = 'When was Pluto unlisted as a planet?'
+const sampleQueries = [
+  'When was Pluto unlisted as a planet?',
+  'RNA vs DNA',
+]
+
+const sampleQuery = computed(() => sampleQueries[activeCard.value] ?? sampleQueries[0])
+
+const carouselRef = ref<HTMLElement | null>(null)
+const activeCard = ref(0)
+
+function onCarouselScroll() {
+  const el = carouselRef.value
+  if (!el) return
+  const cardWidth = el.firstElementChild ? (el.firstElementChild as HTMLElement).offsetWidth + 12 : el.scrollWidth / 2
+  activeCard.value = Math.round(el.scrollLeft / cardWidth)
+}
 
 const result = {
   highlight: 'Originally considered a planet, its status was changed when astronomers adopted a new definition',
@@ -55,7 +85,7 @@ const result = {
 
       <header class="dive-page__header">
         <div class="dive-page__top-row">
-          <span class="dive-page__beta">Beta</span>
+          <BetaBadge />
           <span class="dive-page__gear-wrap">
             <button ref="betaButtonRef" type="button" class="dive-page__gear" aria-label="Settings" @click.stop="toggleBetaMenu">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -79,7 +109,7 @@ const result = {
         </div>
       </header>
 
-      <p class="dive-page__description">
+      <p class="mwf-android-type-p dive-page__description">
         Type what you're looking for and go straight to the part of an article that answers it.
       </p>
 
@@ -101,35 +131,32 @@ const result = {
         <span class="dive-page__mic" aria-hidden="true" />
       </label>
 
-      <button class="dive-page__dive-btn" type="button" @click="router.push({ path: '/example-search-experiment-v3-jump/search/semantic-results', query: { q: searchQuery } })">Dive now</button>
+      <button class="mwf-android-type-p dive-page__dive-btn" type="button" @click="router.push({ path: '/example-search-experiment-v3-jump/search/semantic-results', query: { q: searchQuery } })">Dive now</button>
 
       <section class="dive-page__results">
         <p class="mwf-android-type-p dive-page__sample-query">{{ sampleQuery }}</p>
 
-        <article class="focused-search-semantic-card">
-          <div class="focused-search-semantic-card__header">
-            <span class="focused-search-semantic-card__thumb" aria-hidden="true" />
-            <p class="mwf-android-type-small focused-search-semantic-card__trail">{{ result.article }}</p>
-          </div>
-          <div class="focused-search-semantic-card__snippet">
-            <span class="mwf-android-type-p focused-search-semantic-card__highlight">{{ result.highlight }}</span>
-            <span class="mwf-android-type-p focused-search-semantic-card__faded">{{ result.faded }}</span>
-          </div>
-          <div class="focused-search-semantic-card__bottom">
-            <span class="mwf-android-type-small focused-search-semantic-card__meta-item">
-              {{ result.contributors }} contributors
-            </span>
-            <span class="focused-search-semantic-card__meta-dot" aria-hidden="true">·</span>
-            <span class="mwf-android-type-small focused-search-semantic-card__meta-item">
-              {{ result.references }} references
-            </span>
-          </div>
-        </article>
+        <div ref="carouselRef" class="dive-page__carousel" @scroll.passive="onCarouselScroll">
+          <SemanticResultCard
+            :trail="result.article"
+            :highlight="result.highlight"
+            :faded="result.faded"
+            :contributors="result.contributors"
+            :references="result.references"
+            class="dive-page__card"
+          />
+          <SemanticResultCard
+            trail="RNA > Differences between DNA and RNA"
+            highlight="The chemical structure of RNA is very similar to that of DNA, but differs in three primary ways:"
+            :contributors="312"
+            :references="28"
+            class="dive-page__card"
+          />
+        </div>
 
         <div class="dive-page__dots" aria-hidden="true">
-          <span class="dive-page__dot" />
-          <span class="dive-page__dot" />
-          <span class="dive-page__dot" />
+          <span class="dive-page__dot" :class="{ 'dive-page__dot--active': activeCard === 0 }" />
+          <span class="dive-page__dot" :class="{ 'dive-page__dot--active': activeCard === 1 }" />
         </div>
       </section>
 
@@ -140,6 +167,7 @@ const result = {
 
 <style scoped>
 .dive-page {
+  --proto-card-highlight-bg: #ece7a5;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -181,20 +209,6 @@ const result = {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.dive-page__beta {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #8a8f95;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 0;
-  cursor: pointer;
 }
 
 .beta-menu {
@@ -245,8 +259,8 @@ const result = {
 .dive-page__back {
   flex-shrink: 0;
   margin-top: 6px;
-  width: 24px;
-  height: 24px;
+  width: var(--mobile-android-size-icon);
+  height: var(--mobile-android-size-icon);
   border: 0;
   background: transparent;
   padding: 0;
@@ -302,9 +316,6 @@ const result = {
   background: transparent;
   outline: none;
   color: #202122;
-  font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
   min-width: 0;
 }
 
@@ -317,10 +328,14 @@ const result = {
 }
 
 .dive-page__mic {
+  display: inline-block;
+  box-sizing: border-box;
+  flex-shrink: 0;
   position: relative;
   width: 10px;
   height: 18px;
-  border: 2px solid #72777d;
+  color: #72777d;
+  border: 2px solid currentColor;
   border-radius: 999px;
   border-bottom: 0;
 }
@@ -337,7 +352,8 @@ const result = {
   inset-block-end: -7px;
   width: 10px;
   height: 6px;
-  border: 2px solid #72777d;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
   border-top: 0;
   border-radius: 0 0 999px 999px;
 }
@@ -346,7 +362,7 @@ const result = {
   inset-block-end: -11px;
   width: 2px;
   height: 5px;
-  background: #72777d;
+  background: currentColor;
   border-radius: 999px;
 }
 
@@ -368,6 +384,7 @@ const result = {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: hidden;
 }
 
 .dive-page__sample-query {
@@ -375,81 +392,32 @@ const result = {
   color: #54595d;
 }
 
-/* Result card — matches semantic-results card */
-.focused-search-semantic-card {
-  display: grid;
-  gap: 10px;
-  padding: 14px 12px 0;
-  border-radius: 16px;
-  border: 1px solid #c8ccd1;
-  background: #f8f9fa;
-  overflow: hidden;
-}
-
-.focused-search-semantic-card__header {
+/* Carousel */
+.dive-page__carousel {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
 }
 
-.focused-search-semantic-card__thumb {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background:
-    linear-gradient(#c8ccd1 0 0) center 10px / 22px 2px,
-    linear-gradient(#c8ccd1 0 0) center 16px / 16px 2px,
-    linear-gradient(120deg, #eaecf0, #d4d9df);
-  background-repeat: no-repeat;
+.dive-page__carousel::-webkit-scrollbar {
+  display: none;
 }
 
-.focused-search-semantic-card__trail {
-  margin: 0;
-  color: #72777d;
-}
-
-.focused-search-semantic-card__snippet {
-  display: grid;
-  gap: 2px;
-}
-
-.focused-search-semantic-card__highlight {
-  display: block;
-  margin: 0;
-  padding: 0 4px;
-  background: #ece7a5;
-  color: #202122;
-}
-
-.focused-search-semantic-card__faded {
-  display: block;
-  margin: 0;
-  color: #a2a9b1;
-}
-
-.focused-search-semantic-card__bottom {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  margin: 0 -12px;
-  border-top: 1px solid #eaecf0;
-}
-
-.focused-search-semantic-card__meta-item {
-  color: #72777d;
-}
-
-.focused-search-semantic-card__meta-dot {
-  color: #c8ccd1;
+/* Carousel card sizing */
+.dive-page__card {
+  flex: 0 0 92%;
+  scroll-snap-align: start;
 }
 
 /* Pagination dots */
 .dive-page__dots {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   padding-top: 4px;
 }
 
@@ -458,5 +426,10 @@ const result = {
   height: 8px;
   border-radius: 999px;
   background: #c8ccd1;
+  transition: background 0.2s ease;
+}
+
+.dive-page__dot--active {
+  background: #54595d;
 }
 </style>

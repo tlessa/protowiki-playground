@@ -7,6 +7,8 @@ import { loadConfig, type ConfigTheme } from '@/config'
 
 export type Skin = 'desktop' | 'mobile'
 export type Theme = 'light' | 'dark'
+export type Fidelity = 'wireframe' | 'high'
+export type Platform = 'android' | 'ios'
 
 /**
  * When **`ArticleLive`**, **`ArticleSnapshot`**, **`ArticleCustom`**, **`ArticleWrapper`**, **`ArticleRenderer`**, or **`SpecialPageWrapper`** sit inside **`ChromeWrapper`**,
@@ -69,6 +71,8 @@ function injectThemedTokens(): void {
 // writes to them.
 export const globalSkin: Ref<Skin> = ref<Skin>('desktop')
 export const globalTheme: Ref<Theme> = ref<Theme>('light')
+export const globalFidelity: Ref<Fidelity> = ref<Fidelity>('wireframe')
+export const globalPlatform: Ref<Platform> = ref<Platform>('android')
 
 let themeUrlPinned = false
 let themePreference: ConfigTheme = 'light'
@@ -77,9 +81,20 @@ let onColorSchemeChange: ((event: MediaQueryListEvent) => void) | null = null
 
 function readUrlParam(name: string): string | null {
   if (typeof window === 'undefined') return null
-  const params = new URLSearchParams(window.location.search)
-  const value = params.get(name)
-  return value
+
+  // Prefer standard query params (`?theme=...`) and fall back to hash-route
+  // query params (`#/route?theme=...`) used with createWebHashHistory.
+  const searchParams = new URLSearchParams(window.location.search)
+  const fromSearch = searchParams.get(name)
+  if (fromSearch !== null) return fromSearch
+
+  const hash = window.location.hash || ''
+  const hashQueryIndex = hash.indexOf('?')
+  if (hashQueryIndex === -1) return null
+
+  const hashQuery = hash.slice(hashQueryIndex + 1)
+  const hashParams = new URLSearchParams(hashQuery)
+  return hashParams.get(name)
 }
 
 function isSkin(value: unknown): value is Skin {
@@ -88,6 +103,16 @@ function isSkin(value: unknown): value is Skin {
 
 function isTheme(value: unknown): value is Theme {
   return value === 'light' || value === 'dark'
+}
+
+function normalizeFidelity(value: unknown): Fidelity | null {
+  if (value === 'wireframe') return 'wireframe'
+  if (value === 'high' || value === 'high-fidelity') return 'high'
+  return null
+}
+
+function isPlatform(value: unknown): value is Platform {
+  return value === 'android' || value === 'ios'
 }
 
 function resolveSkinFromViewport(): Skin {
@@ -100,7 +125,10 @@ function resolveThemeFromMedia(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-function setHtmlAttribute(name: 'data-skin' | 'data-theme', value: string): void {
+function setHtmlAttribute(
+  name: 'data-skin' | 'data-theme' | 'data-fidelity' | 'data-platform',
+  value: string
+): void {
   if (typeof document === 'undefined') return
   document.documentElement.setAttribute(name, value)
 }
@@ -192,12 +220,20 @@ export function initTheming(): void {
 
   const skinParam = readUrlParam('skin')
   const themeParam = readUrlParam('theme')
+  const fidelityParam = normalizeFidelity(readUrlParam('fidelity'))
+  const platformParam = readUrlParam('platform')
 
   const skinPinned = isSkin(skinParam)
   themeUrlPinned = isTheme(themeParam)
 
   globalSkin.value = skinPinned ? (skinParam as Skin) : resolveSkinFromViewport()
   setHtmlAttribute('data-skin', globalSkin.value)
+
+  globalFidelity.value = fidelityParam ?? 'wireframe'
+  setHtmlAttribute('data-fidelity', globalFidelity.value)
+
+  globalPlatform.value = isPlatform(platformParam) ? platformParam : 'android'
+  setHtmlAttribute('data-platform', globalPlatform.value)
 
   applyThemePreference(loadConfig().theme)
 

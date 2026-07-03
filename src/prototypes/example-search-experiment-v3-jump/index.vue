@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePage({
   meta: {
-    title: 'Example: Semantic Search Exploration 3 - Jump',
+    title: 'Example: Semantic Search Variant 2 - Jump',
     description: 'Semantic search: Jump/Dive',
   },
 })
@@ -134,7 +134,7 @@ import '@/styles/mobile-android/index.css'
   align-items: center;
   justify-content: space-between;
   min-height: 64px;
-  padding: 8px 16px;
+  padding: var(--mobile-android-space-sm) var(--mobile-android-space-md);
   background: #fff;
 }
 
@@ -191,7 +191,7 @@ import '@/styles/mobile-android/index.css'
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   padding: 8px 0 0;
   border: 0;
   background: transparent;
@@ -266,7 +266,7 @@ import '@/styles/mobile-android/index.css'
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .home-intro__line {
@@ -285,7 +285,7 @@ import '@/styles/mobile-android/index.css'
 .home-intro__globe {
   flex: 0 0 auto;
   width: 56px;
-  height: 56px;
+  height: var(--mobile-android-size-thumbnail);
   border-radius: 999px;
   background: radial-gradient(circle at 35% 35%, #fafbfc, #bfc5cb);
 }
@@ -293,7 +293,7 @@ import '@/styles/mobile-android/index.css'
 .home-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .home-section__date,

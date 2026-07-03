@@ -32,7 +32,12 @@ const props = withDefaults(defineProps<Props>(), {
   min-height: 100vh;
   padding: 0;
   background:
-    radial-gradient(circle at top, rgba(234, 236, 240, 0.9), rgba(248, 249, 250, 0.96) 42%, #eef1f4 100%);
+    radial-gradient(
+      circle at top,
+      var(--proto-shell-gradient-start),
+      var(--proto-shell-gradient-mid) 42%,
+      var(--proto-shell-gradient-end) 100%
+    );
 }
 
 .wireframe-mobile-wrapper__column {
@@ -40,7 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
   width: min(100%, var(--wireframe-mobile-max-width, 560px));
   min-height: 100vh;
   margin-inline: auto;
-  background-color: var(--background-color-base, #fff);
+  background-color: var(--proto-shell-column-bg);
 }
 
 @media (min-width: 480px) {
@@ -53,7 +58,7 @@ const props = withDefaults(defineProps<Props>(), {
 
   .wireframe-mobile-wrapper__column {
     width: min(calc(100vw - clamp(24px, 8vw, 96px)), var(--wireframe-mobile-max-width, 560px));
-    border: 1px solid rgba(162, 169, 177, 0.4);
+    border: 1px solid var(--proto-shell-column-border);
   }
 }
 

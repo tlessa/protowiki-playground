@@ -172,7 +172,7 @@ const historyGroups: HistoryGroup[] = [
   position: sticky;
   top: calc(24px + env(safe-area-inset-top, 0px));
   z-index: 9;
-  min-height: 56px;
+  min-height: var(--mobile-android-size-section-header-height);
   padding: 9px 24px 8px;
   background: #FFFFFF;
   border-bottom: 1px solid #eaecf0;
@@ -180,8 +180,8 @@ const historyGroups: HistoryGroup[] = [
 
 .wireframe-tab-title__notification {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: var(--mobile-android-size-icon);
+  height: var(--mobile-android-size-icon);
 }
 
 .wireframe-tab-title__notification-icon {

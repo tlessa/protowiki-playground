@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
-import { cdxIconTrash } from '@wikimedia/codex-icons'
+import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
-import AppIcon from '@/components/AppIcon.vue'
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
-import { MATERIAL_ICON_PATHS } from '@/lib/materialIconPaths'
+import SemanticResultCard from '@/components/SemanticResultCard.vue'
 import '@/styles/mobile-android/index.css'
 
 definePage({
@@ -27,17 +25,7 @@ const languages: LanguageOption[] = [
   { code: 'PT', label: 'PORTUGUES', lang: 'pt' },
   { code: 'ES', label: 'ESPAÑOL', lang: 'es' },
 ]
-const recentSearches = ref([
-  'dog',
-  'hshd',
-  "cat\'s ability to see in the dark",
-  "cat\'s ability",
-  'cat',
-  'edga',
-])
-const searchInput = ref<HTMLInputElement | null>(null)
 const searchQuery = ref('')
-const isSearching = ref(false)
 const searchError = ref('')
 const selectedLanguage = ref<'en' | 'pt' | 'es'>('en')
 
@@ -86,10 +74,6 @@ function closeBetaMenu() {
 }
 
 
-let abortController: AbortController | null = null
-
-const isShowingResults = computed(() => searchQuery.value.trim().length > 0)
-
 const showFeedbackToast = ref(false)
 const feedbackToastThumb = ref<'up' | 'down' | null>(null)
 const feedbackToastExpanded = ref(false)
@@ -101,14 +85,13 @@ const w = window as Window & { _v3Visits?: number; _v3CardTapped?: boolean; _v3T
 
 function selectThumb(thumb: 'up' | 'down') {
   feedbackToastThumb.value = thumb
-  showFeedbackToast.value = false
-  showThanksToast.value = true
-  if (thanksTimer) clearTimeout(thanksTimer)
-  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
+  feedbackToastExpanded.value = true
 }
 
 function submitFeedbackToast() {
   showFeedbackToast.value = false
+  feedbackToastExpanded.value = false
+  feedbackToastText.value = ''
   showThanksToast.value = true
   if (thanksTimer) clearTimeout(thanksTimer)
   thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
@@ -118,50 +101,10 @@ function scheduleSearch(_query: string) {
   searchResults.value = HARDCODED_RESULTS
 }
 
-
-function onSearchInput(event: Event) {
-  const target = event.target as HTMLInputElement | null
-  searchQuery.value = target?.value ?? ''
-  scheduleSearch(searchQuery.value)
-}
-
-function clearListOrQuery() {
-  if (isShowingResults.value) {
-    searchQuery.value = ''
-    searchResults.value = []
-    searchError.value = ''
-    isSearching.value = false
-    isSkeletonVisible.value = false
-    abortController?.abort()
-    nextTick(() => searchInput.value?.focus())
-    return
-  }
-  recentSearches.value = []
-}
-
-function useSuggestion(value: string) {
-  searchQuery.value = value
-  scheduleSearch(value)
-  nextTick(() => {
-    if (searchInput.value) {
-      searchInput.value.value = value
-      searchInput.value.focus()
-    }
-  })
-}
-
 function selectLanguage(lang: 'en' | 'pt' | 'es') {
-  if (selectedLanguage.value === lang) {
-    return
-  }
-
+  if (selectedLanguage.value === lang) return
   selectedLanguage.value = lang
-
-  if (searchQuery.value.trim()) {
-    scheduleSearch(searchQuery.value)
-  }
-
-  nextTick(() => searchInput.value?.focus())
+  if (searchQuery.value.trim()) scheduleSearch(searchQuery.value)
 }
 
 const router = useRouter()
@@ -178,7 +121,7 @@ function openArticle(result: WikiSearchResult) {
   })
 }
 
-onMounted(async () => {
+onMounted(() => {
   const routeQuery = typeof route.query.q === 'string' ? route.query.q.trim() : ''
   const routeLang = route.query.lang
   if (routeLang === 'en' || routeLang === 'pt' || routeLang === 'es') {
@@ -187,11 +130,6 @@ onMounted(async () => {
   if (routeQuery) {
     searchQuery.value = routeQuery
     scheduleSearch(routeQuery)
-  }
-  await nextTick()
-  if (searchInput.value) {
-    searchInput.value.value = routeQuery
-    searchInput.value.focus()
   }
 
   w._v3Visits = (w._v3Visits ?? 0) + 1
@@ -219,21 +157,16 @@ onMounted(async () => {
             <span class="focused-search-header__back-shaft" />
           </RouterLink>
 
-          <div class="focused-search-header__field" role="search">
-            <input
-              ref="searchInput"
-              class="mwf-android-type-p focused-search-header__input"
-              type="search"
-              placeholder="Search Wikipedia"
-              aria-label="Search Wikipedia"
-              autocomplete="off"
-              autocapitalize="none"
-              spellcheck="false"
-              autofocus
-              :value="searchQuery"
-              @input="onSearchInput"
-            />
-            
+          <div class="focused-search-header__field">
+            <span class="focused-search-header__beta-wrap">
+              <button type="button" class="focused-search-header__beta" @click.stop="toggleBetaMenu">Beta</button>
+              <div v-if="showBetaMenu" class="beta-menu" role="menu">
+                <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
+                <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
+              </div>
+              <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
+            </span>
+            <span class="mwf-android-type-p focused-search-header__query">{{ searchQuery }}</span>
           </div>
         </header>
 
@@ -261,80 +194,54 @@ onMounted(async () => {
         
       </template>
 
-      <section class="focused-search-content" aria-label="Recent searches">
-        <header v-if="!isShowingResults" class="focused-search-content__header">
-          <h1 class="mwf-android-type-h1 focused-search-content__title">Recent searches:</h1>
-          <button
-            class="focused-search-content__clear"
-            type="button"
-            aria-label="Clear recent searches"
-            @click="clearListOrQuery"
-          >
-            <AppIcon :codex-icon="cdxIconTrash" :material-icon="MATERIAL_ICON_PATHS.trash" />
-          </button>
-        </header>
+      <section class="focused-search-content" aria-label="Search results">
+        <div v-if="showFeedbackToast" class="feedback-inline" role="region" aria-label="Feedback">
+          <div class="feedback-inline__top-row">
+            <span class="mwf-android-type-p feedback-inline__label">Did you find what you were looking for?</span>
+            <div class="feedback-inline__thumbs">
+              <button
+                type="button"
+                class="feedback-inline__thumb"
+                :class="{ 'feedback-inline__thumb--active': feedbackToastThumb === 'up' }"
+                aria-label="Yes"
+                @click="selectThumb('up')"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="feedback-inline__thumb"
+                :class="{ 'feedback-inline__thumb--active': feedbackToastThumb === 'down' }"
+                aria-label="No"
+                @click="selectThumb('down')"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div v-if="feedbackToastExpanded" class="feedback-inline__details">
+            <input
+              v-model="feedbackToastText"
+              class="mwf-android-type-p feedback-inline__input"
+              type="text"
+              placeholder="Tell us more (optional)"
+              aria-label="Tell us more"
+            >
+            <button type="button" class="mwf-android-type-p feedback-inline__submit" @click="submitFeedbackToast">Submit</button>
+          </div>
+        </div>
 
         <p v-if="searchError" class="mwf-android-type-p focused-search-content__status">
           {{ searchError }}
         </p>
 
-        <header v-if="isShowingResults" class="focused-search-dive-header">
-          <span class="focused-search-dive-header__beta-wrap">
-            <button type="button" class="focused-search-dive-header__beta" @click.stop="toggleBetaMenu">Beta</button>
-            <div v-if="showBetaMenu" class="beta-menu" role="menu">
-              <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
-              <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
-            </div>
-            <div v-if="showBetaMenu" class="beta-menu__backdrop" @click="closeBetaMenu" />
-          </span>
-          <div class="focused-search-dive-header__row">
-            <h2 class="mwf-android-type-h1 focused-search-dive-header__title">Dive</h2>
-          </div>
-        </header>
 
-        <ul v-if="!isShowingResults" class="focused-search-content__list">
-          <li
-            v-for="item in recentSearches"
-            :key="item"
-            class="mwf-android-type-p focused-search-content__item"
-          >
-            <button type="button" class="focused-search-content__item-button" @click="useSuggestion(item)">
-              {{ item }}
-            </button>
-          </li>
-        </ul>
-
-        <ul v-else-if="false" class="focused-search-content__results">
-          <li class="focused-search-content__result-item">
-            <button type="button" class="focused-search-content__result-button" @click="openArticle({ title: searchQuery.trim(), description: '' })">
-              <span class="focused-search-content__result-copy"><span class="mwf-android-type-small focused-search-content__dive-badge"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 4.67578C0 4.03125 0.121094 3.42773 0.363281 2.86523C0.605469 2.29883 0.941406 1.80078 1.37109 1.37109C1.80078 0.941406 2.29688 0.605469 2.85938 0.363281C3.42578 0.121094 4.03125 0 4.67578 0C5.32031 0 5.92383 0.121094 6.48633 0.363281C7.05273 0.605469 7.55078 0.941406 7.98047 1.37109C8.41016 1.80078 8.74609 2.29883 8.98828 2.86523C9.23047 3.42773 9.35156 4.03125 9.35156 4.67578C9.35156 5.21094 9.26562 5.71875 9.09375 6.19922C8.92578 6.67969 8.69141 7.11523 8.39062 7.50586L11.2559 10.3887C11.3184 10.4512 11.3652 10.5234 11.3965 10.6055C11.4316 10.6875 11.4492 10.7754 11.4492 10.8691C11.4492 10.998 11.4199 11.1152 11.3613 11.2207C11.3066 11.3262 11.2285 11.4082 11.127 11.4668C11.0254 11.5293 10.9082 11.5605 10.7754 11.5605C10.6816 11.5605 10.5918 11.543 10.5059 11.5078C10.4238 11.4766 10.3477 11.4277 10.2773 11.3613L7.39453 8.47266C7.01172 8.74609 6.58984 8.96094 6.12891 9.11719C5.66797 9.27344 5.18359 9.35156 4.67578 9.35156C4.03125 9.35156 3.42578 9.23047 2.85938 8.98828C2.29688 8.74609 1.80078 8.41016 1.37109 7.98047C0.941406 7.55078 0.605469 7.05469 0.363281 6.49219C0.121094 5.92578 0 5.32031 0 4.67578ZM1.00195 4.67578C1.00195 5.18359 1.0957 5.66016 1.2832 6.10547C1.47461 6.54688 1.73828 6.93555 2.07422 7.27148C2.41406 7.60742 2.80469 7.87109 3.24609 8.0625C3.69141 8.25391 4.16797 8.34961 4.67578 8.34961C5.18359 8.34961 5.6582 8.25391 6.09961 8.0625C6.54492 7.87109 6.93555 7.60742 7.27148 7.27148C7.60742 6.93555 7.87109 6.54688 8.0625 6.10547C8.25391 5.66016 8.34961 5.18359 8.34961 4.67578C8.34961 4.16797 8.25391 3.69336 8.0625 3.25195C7.87109 2.80664 7.60742 2.41602 7.27148 2.08008C6.93555 1.74023 6.54492 1.47656 6.09961 1.28906C5.6582 1.09766 5.18359 1.00195 4.67578 1.00195C4.16797 1.00195 3.69141 1.09766 3.24609 1.28906C2.80469 1.47656 2.41406 1.74023 2.07422 2.08008C1.73828 2.41602 1.47461 2.80664 1.2832 3.25195C1.0957 3.69336 1.00195 4.16797 1.00195 4.67578Z" fill="white"/></svg>{{ selectedLanguage === 'pt' ? 'Mergulhe' : selectedLanguage === 'es' ? 'Bucear' : 'Dive' }}</span><span class="mwf-android-type-p focused-search-content__result-title">{{ searchQuery.trim() }}</span><span class="mwf-android-type-p focused-search-content__result-description">{{ selectedLanguage === 'pt' ? 'Pesquisar dentro de artigos da Wikipédia' : selectedLanguage === 'es' ? 'Buscar dentro de los artículos de Wikipedia' : 'Search within Wikipedia articles' }}</span></span>
-            </button>
-          </li>
-          <li v-for="result in searchResults" :key="result.title" class="focused-search-content__result-item">
-            <button
-              type="button"
-              class="focused-search-content__result-button"
-              @click="openArticle(result)"
-            >
-              <span class="focused-search-content__result-copy">
-                <span class="mwf-android-type-p focused-search-content__result-title">{{ result.title }}</span>
-                <span class="mwf-android-type-p focused-search-content__result-description">
-                  {{ result.description }}
-                </span>
-              </span>
-
-              <span
-                v-if="result.thumbnailUrl"
-                class="focused-search-content__result-thumb"
-                :style="{ backgroundImage: `url(${result.thumbnailUrl})` }"
-                aria-hidden="true"
-              />
-              <span v-else class="focused-search-content__result-thumb focused-search-content__result-thumb--placeholder" aria-hidden="true" />
-            </button>
-          </li>
-        </ul>
-
-        <ul v-else-if="isSkeletonVisible" class="focused-search-content__results focused-search-content__results--semantic" aria-hidden="true">
+        <ul v-if="isSkeletonVisible" class="focused-search-content__results focused-search-content__results--semantic" aria-hidden="true">
           <li v-for="n in 3" :key="n" class="focused-search-content__result-item">
             <article class="focused-search-semantic-card focused-search-skeleton-card">
               <div class="focused-search-skeleton focused-search-skeleton--trail" />
@@ -350,65 +257,26 @@ onMounted(async () => {
           </li>
         </ul>
 
-        <ul v-else class="focused-search-content__results focused-search-content__results--semantic">
+        <ul v-else class="focused-search-content__results focused-search-content__results--semantic" aria-label="Dive results">
           <li v-if="!searchResults.length && !searchError" class="focused-search-content__result-item">
             <p class="mwf-android-type-p focused-search-content__status">No results found.</p>
           </li>
           <li v-for="result in searchResults" :key="result.title" class="focused-search-content__result-item">
-            <article class="focused-search-semantic-card" role="button" tabindex="0" @click="openArticle(result)">
-              <div class="focused-search-semantic-card__header">
-                <span class="focused-search-semantic-card__thumb" aria-hidden="true" />
-                <p class="mwf-android-type-small focused-search-semantic-card__trail">
-                  {{ result.title }}{{ result.sectionTitle ? ` > ${result.sectionTitle}` : '' }}
-                </p>
-              </div>
-              <div class="focused-search-semantic-card__snippet">
-                <span class="mwf-android-type-p focused-search-semantic-card__highlight"><span class="focused-search-semantic-card__quote" aria-hidden="true">&#x201C;</span>{{ result.extract ?? result.title }}</span>
-              </div>
-              <div class="focused-search-semantic-card__bottom">
-                <span class="mwf-android-type-small focused-search-semantic-card__meta-item">
-                  {{ dummyMeta(result.title).contributors }} contributors
-                </span>
-                <span class="focused-search-semantic-card__meta-dot" aria-hidden="true">·</span>
-                <span class="mwf-android-type-small focused-search-semantic-card__meta-item">
-                  {{ dummyMeta(result.title).references }} references
-                </span>
-              </div>
-            </article>
+            <SemanticResultCard
+              :trail="result.title + (result.sectionTitle ? ' > ' + result.sectionTitle : '')"
+              :highlight="result.extract ?? result.title"
+              :contributors="dummyMeta(result.title).contributors"
+              :references="dummyMeta(result.title).references"
+              role="button"
+              tabindex="0"
+              @click="openArticle(result)"
+            />
           </li>
         </ul>
       </section>
 
     </WireframeChromeWrapper>
     </div>
-
-    <Transition name="feedback-toast">
-      <div v-if="showFeedbackToast" class="feedback-toast" role="dialog" aria-label="Feedback">
-        <div class="feedback-toast__top-row">
-          <span class="feedback-toast__label">Did you find what you were looking for?</span>
-          <div class="feedback-toast__thumbs">
-            <button type="button" class="feedback-toast__thumb" :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'up' }" aria-label="Yes" @click="selectThumb('up')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button type="button" class="feedback-toast__thumb" :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'down' }" aria-label="No" @click="selectThumb('down')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <button type="button" class="feedback-toast__details-row" @click="feedbackToastExpanded = !feedbackToastExpanded">
-          <span class="feedback-toast__details-label">Add more details here (optional)</span>
-          <svg class="feedback-toast__chevron" :class="{ 'feedback-toast__chevron--open': feedbackToastExpanded }" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <textarea v-if="feedbackToastExpanded" v-model="feedbackToastText" class="feedback-toast__textarea" rows="3" />
-        <button type="button" class="feedback-toast__submit" @click="submitFeedbackToast">Submit</button>
-      </div>
-    </Transition>
 
     <Transition name="thanks-toast">
       <div v-if="showThanksToast" class="thanks-toast" role="status" aria-live="polite">
@@ -423,7 +291,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   min-height: 64px;
   padding: 8px 12px 10px;
   background: #fff;
@@ -465,29 +333,52 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 48px;
+  min-height: var(--mobile-android-size-list-item-height);
 }
 
-.focused-search-header__input {
-  width: 100%;
+.focused-search-header__field {
+  display: flex;
+  align-items: center;
+  gap: var(--mobile-android-space-sm);
+}
+
+.focused-search-header__beta-wrap {
+  flex-shrink: 0;
+}
+
+.focused-search-header__beta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
   border: 0;
-  background: transparent;
-  color: #202122;
-  outline: none;
-  padding-inline-end: 52px;
+  border-radius: 100px;
+  background: var(--progressive, #36C);
+  color: #fff;
+  font-family: var(--mobile-android-type-toolbar-font-family, sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
-.focused-search-header__input::placeholder {
-  color: #54595d;
+.focused-search-header__query {
+  color: #202122;
+  user-select: none;
 }
 
 .focused-search-header__beta {
   position: absolute;
   inset-inline-end: 22px;
   pointer-events: none;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #3366cc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--progressive, #36C);
   color: #fff;
   font-family: var(--mobile-android-type-toolbar-font-family, sans-serif);
   font-size: 10px;
@@ -619,7 +510,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .focused-search-dive-header__title {
@@ -632,11 +523,13 @@ onMounted(async () => {
 }
 
 .focused-search-dive-header__beta {
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   align-self: flex-start;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #3366cc;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--progressive, #36C);
   color: #fff;
   font-family: var(--mobile-android-type-toolbar-font-family, sans-serif);
   font-size: 10px;
@@ -776,7 +669,7 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.focused-search-content__dive-badge { display: inline-flex; align-items: center; width: fit-content; gap: 8px; padding: 3px 12px; border-radius: 10px; background: #8a8f95; color: #fff; }
+.focused-search-content__dive-badge { display: inline-flex; align-items: center; width: fit-content; gap: var(--mobile-android-space-sm); padding: 3px 12px; border-radius: 10px; background: #8a8f95; color: #fff; }
 .focused-search-content__dive-badge svg { display: block; width: 12px; height: 12px; }
 
 .focused-search-content__result-title,
@@ -900,7 +793,7 @@ onMounted(async () => {
 
 .focused-search-footer__namespaces {
   display: flex;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
   align-items: center;
   min-height: 44px;
   padding: 0 12px;
@@ -981,6 +874,7 @@ onMounted(async () => {
 .ui-frame {
   position: relative;
   min-height: 100vh;
+  --proto-card-highlight-bg: #ece7a5;
 }
 
 /* Feedback bottom sheet */
@@ -1022,7 +916,7 @@ onMounted(async () => {
 
 .feedback-sheet__stars {
   display: flex;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .feedback-sheet__star {
@@ -1121,125 +1015,92 @@ onMounted(async () => {
   transform: translateY(100%);
 }
 
-.feedback-toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(calc(100% - 32px), 480px);
+/* Inline feedback prompt */
+.feedback-inline {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 16px;
+  align-items: stretch;
+  gap: 12px;
+  padding: 14px;
   border-radius: 16px;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.14);
-  z-index: 300;
-  pointer-events: all;
+  background: #dcdfe3;
 }
 
-.feedback-toast__top-row {
+.feedback-inline__top-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.feedback-toast__label {
-  font-size: 15px;
+.feedback-inline__label {
   line-height: 1.4;
   color: #202122;
   flex: 1;
 }
 
-.feedback-toast__thumbs {
+.feedback-inline__thumbs {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.feedback-toast__thumb {
-  width: 40px;
-  height: 40px;
+.feedback-inline__thumb {
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  color: #54595d;
+  border: 2px solid #a2a9b1;
+  background: #dcdfe3;
+  color: #72777d;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.feedback-toast__thumb--active {
+.feedback-inline__thumb--active {
   border-color: #3366cc;
   color: #3366cc;
   background: #eaf0fb;
 }
 
-.feedback-toast__details-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
+.feedback-inline__details {
+  display: grid;
+  gap: 12px;
 }
 
-.feedback-toast__details-label {
-  font-size: 15px;
-  color: #202122;
-}
-
-.feedback-toast__chevron {
-  color: #54595d;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.feedback-toast__chevron--open {
-  transform: rotate(90deg);
-}
-
-.feedback-toast__textarea {
+.feedback-inline__input {
   width: 100%;
   box-sizing: border-box;
-  border: 1.5px solid #c8ccd1;
+  height: 48px;
   border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 15px;
-  font-family: inherit;
+  border: 1.5px solid #a2b8d1;
+  background: #dcdfe3;
   color: #202122;
-  resize: none;
+  padding: 0 14px;
   outline: none;
 }
 
-.feedback-toast__textarea:focus {
+.feedback-inline__input::placeholder {
+  color: #72777d;
+}
+
+.feedback-inline__input:focus {
   border-color: #3366cc;
+  background: #f8f9fa;
 }
 
-.feedback-toast__submit {
-  align-self: center;
-  padding: 10px 32px;
-  border: 1.5px solid #c8ccd1;
+.feedback-inline__submit {
+  justify-self: center;
+  min-width: 180px;
+  height: 46px;
   border-radius: 999px;
-  background: #fff;
+  border: 1.5px solid #a2b8d1;
+  background: #f1f3f5;
   color: #202122;
-  font-size: 15px;
-  font-weight: 500;
+  line-height: 1.2;
+  padding: 0 20px;
   cursor: pointer;
-}
-
-.feedback-toast-enter-active { animation: toast-in 0.2s ease-out; }
-.feedback-toast-leave-active { animation: toast-in 0.15s ease-in reverse; }
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .thanks-toast {

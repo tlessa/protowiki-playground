@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
+import BetaBadge from '@/components/BetaBadge.vue'
 import '@/styles/mobile-android/index.css'
 
 definePage({
@@ -23,20 +24,11 @@ const selectedLanguage = ref<'en' | 'pt' | 'es'>('en')
 
 const showFeedbackToast = ref(false)
 const feedbackToastThumb = ref<'up' | 'down' | null>(null)
-const feedbackToastExpanded = ref(false)
-const feedbackToastText = ref('')
 const showThanksToast = ref(false)
 let thanksTimer: ReturnType<typeof setTimeout> | null = null
 
 function selectThumb(thumb: 'up' | 'down') {
   feedbackToastThumb.value = thumb
-  showFeedbackToast.value = false
-  showThanksToast.value = true
-  if (thanksTimer) clearTimeout(thanksTimer)
-  thanksTimer = setTimeout(() => { showThanksToast.value = false }, 3000)
-}
-
-function submitFeedbackToast() {
   showFeedbackToast.value = false
   showThanksToast.value = true
   if (thanksTimer) clearTimeout(thanksTimer)
@@ -132,10 +124,38 @@ watch(() => route.fullPath, () => {
           <div class="semantic-sheet__content">
             <header class="semantic-sheet__header">
               <h2 class="mwf-android-type-h1 semantic-sheet__title">Dive</h2>
-              <span class="mwf-android-type-small semantic-sheet__beta">Beta</span>
+              <BetaBadge />
             </header>
 
-            <p class="semantic-sheet__query">can cats</p>
+            <p class="mwf-android-type-p semantic-sheet__query">can cats</p>
+
+            <div v-if="showFeedbackToast" class="feedback-inline" role="region" aria-label="Feedback">
+              <span class="mwf-android-type-p feedback-inline__label">Did you find what you were looking for? Add more details (optional)</span>
+              <div class="feedback-inline__thumbs">
+                <button
+                  type="button"
+                  class="feedback-inline__thumb"
+                  :class="{ 'feedback-inline__thumb--active': feedbackToastThumb === 'up' }"
+                  aria-label="Yes"
+                  @click="selectThumb('up')"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="feedback-inline__thumb"
+                  :class="{ 'feedback-inline__thumb--active': feedbackToastThumb === 'down' }"
+                  aria-label="No"
+                  @click="selectThumb('down')"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
 
             <p v-if="searchError" class="mwf-android-type-p semantic-sheet__status">
               {{ searchError }}
@@ -188,55 +208,6 @@ watch(() => route.fullPath, () => {
         </div>
       </div>
     </div>
-
-    <Transition name="feedback-toast">
-      <div v-if="showFeedbackToast" class="feedback-toast" role="dialog" aria-label="Feedback">
-        <div class="feedback-toast__top-row">
-          <span class="feedback-toast__label">Did you find what you were looking for?</span>
-          <div class="feedback-toast__thumbs">
-            <button
-              type="button"
-              class="feedback-toast__thumb"
-              :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'up' }"
-              aria-label="Yes"
-              @click="selectThumb('up')"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 22V11M2 13v7a2 2 0 002 2h11.17a2 2 0 001.96-1.6l1.54-7a2 2 0 00-1.96-2.4H14V5a3 3 0 00-3-3 1 1 0 00-1 1v.5L7.5 9.5A1 1 0 007 10.4V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="feedback-toast__thumb"
-              :class="{ 'feedback-toast__thumb--active': feedbackToastThumb === 'down' }"
-              aria-label="No"
-              @click="selectThumb('down')"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M17 2v11m5-2V4a2 2 0 00-2-2H8.83a2 2 0 00-1.96 1.6l-1.54 7A2 2 0 007.29 13H10v4a3 3 0 003 3 1 1 0 001-1v-.5l2.5-4A1 1 0 0017 13.6V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <button type="button" class="feedback-toast__details-row" @click="feedbackToastExpanded = !feedbackToastExpanded">
-          <span class="feedback-toast__details-label">Add more details here (optional)</span>
-          <svg
-            class="feedback-toast__chevron"
-            :class="{ 'feedback-toast__chevron--open': feedbackToastExpanded }"
-            width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
-          >
-            <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <textarea
-          v-if="feedbackToastExpanded"
-          v-model="feedbackToastText"
-          class="feedback-toast__textarea"
-          rows="3"
-        />
-        <button type="button" class="feedback-toast__submit" @click="submitFeedbackToast">Submit</button>
-      </div>
-    </Transition>
 
     <Transition name="thanks-toast">
       <div v-if="showThanksToast" class="thanks-toast" role="status" aria-live="polite">
@@ -305,27 +276,15 @@ watch(() => route.fullPath, () => {
 .semantic-sheet__header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--mobile-android-space-sm);
 }
 
 .semantic-sheet__title {
   margin: 0;
 }
 
-.semantic-sheet__beta {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: #3366cc;
-  color: #fff;
-  font-size: 10px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .semantic-sheet__query {
   margin: 0;
-  font-size: 16px;
   color: #202122;
 }
 
@@ -446,126 +405,46 @@ watch(() => route.fullPath, () => {
   pointer-events: none;
 }
 
-/* Feedback toast */
-.feedback-toast {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(calc(100% - 32px), 480px);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px 16px;
-  border-radius: 16px;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.14);
-  z-index: 300;
-  pointer-events: all;
-}
-
-.feedback-toast__top-row {
+/* Inline feedback prompt */
+.feedback-inline {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 14px 12px;
+  border-radius: 16px;
+  background: #dcdfe3;
 }
 
-.feedback-toast__label {
-  font-size: 15px;
+.feedback-inline__label {
   line-height: 1.4;
   color: #202122;
   flex: 1;
 }
 
-.feedback-toast__thumbs {
+.feedback-inline__thumbs {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.feedback-toast__thumb {
-  width: 40px;
-  height: 40px;
+.feedback-inline__thumb {
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 1.5px solid #c8ccd1;
-  background: #fff;
-  color: #54595d;
+  border: 2px solid #a2a9b1;
+  background: #dcdfe3;
+  color: #72777d;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
 }
 
-.feedback-toast__thumb--active {
+.feedback-inline__thumb--active {
   border-color: #3366cc;
   color: #3366cc;
   background: #eaf0fb;
-}
-
-.feedback-toast__details-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-}
-
-.feedback-toast__details-label {
-  font-size: 15px;
-  color: #202122;
-}
-
-.feedback-toast__chevron {
-  color: #54595d;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.feedback-toast__chevron--open {
-  transform: rotate(90deg);
-}
-
-.feedback-toast__textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1.5px solid #c8ccd1;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 15px;
-  font-family: inherit;
-  color: #202122;
-  resize: none;
-  outline: none;
-}
-
-.feedback-toast__textarea:focus {
-  border-color: #3366cc;
-}
-
-.feedback-toast__submit {
-  align-self: center;
-  padding: 10px 32px;
-  border: 1.5px solid #c8ccd1;
-  border-radius: 999px;
-  background: #fff;
-  color: #202122;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.feedback-toast-enter-active { animation: toast-in 0.2s ease-out; }
-.feedback-toast-leave-active { animation: toast-in 0.15s ease-in reverse; }
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .thanks-toast {
