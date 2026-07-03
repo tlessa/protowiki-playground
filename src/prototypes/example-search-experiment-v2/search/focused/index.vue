@@ -1472,8 +1472,8 @@ onMounted(async () => {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: var(--mobile-android-size-icon);
-  height: var(--mobile-android-size-icon);
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0,0,0,0.22);
