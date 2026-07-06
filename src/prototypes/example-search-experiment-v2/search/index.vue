@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   cdxIconBell,
@@ -23,7 +24,7 @@ import '@/styles/mobile-android/index.css'
 interface HistoryEntry {
   title: string
   subtitle: string
-  thumbnail?: 'normal' | 'text'
+  thumbnail?: 'normal' | 'text' | 'query'
 }
 
 interface HistoryGroup {
@@ -31,7 +32,7 @@ interface HistoryGroup {
   entries: HistoryEntry[]
 }
 
-const historyGroups: HistoryGroup[] = [
+const historyGroups = ref<HistoryGroup[]>([
   {
     date: 'Jun 16, 2026',
     entries: [
@@ -71,7 +72,20 @@ const historyGroups: HistoryGroup[] = [
       },
     ],
   },
-]
+])
+
+onMounted(() => {
+  const stored: { query: string; date: string }[] = JSON.parse(localStorage.getItem('v2_search_history') ?? '[]')
+  for (const entry of [...stored].reverse()) {
+    const group = historyGroups.value.find(g => g.date === entry.date)
+    const item = { title: entry.query, subtitle: '', thumbnail: 'query' as const }
+    if (group) {
+      group.entries.unshift(item)
+    } else {
+      historyGroups.value.unshift({ date: entry.date, entries: [item] })
+    }
+  }
+})
 </script>
 
 <template>
@@ -147,7 +161,22 @@ const historyGroups: HistoryGroup[] = [
               </div>
 
               <div
-                v-if="entry.thumbnail"
+                v-if="entry.thumbnail === 'query'"
+                class="search-surface__history-thumb search-surface__history-thumb--query"
+                aria-hidden="true"
+              >
+                <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                  <text x="1" y="31" font-size="32" font-family="Georgia,serif" font-weight="900" fill="#1a1a1a">&#x201C;</text>
+                  <rect x="15" y="13" width="29" height="5.5" rx="2.75" fill="#f5c518"/>
+                  <rect x="15" y="21.5" width="29" height="5.5" rx="2.75" fill="#f5c518"/>
+                  <rect x="15" y="30" width="21" height="5.5" rx="2.75" fill="#f5c518"/>
+                  <circle cx="30" cy="23" r="10" fill="#1a1a1a"/>
+                  <circle cx="30" cy="23" r="6" fill="#e8eaed"/>
+                  <line x1="37" y1="30" x2="43" y2="37" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div
+                v-else-if="entry.thumbnail"
                 :class="[
                   'search-surface__history-thumb',
                   entry.thumbnail === 'text'
@@ -347,6 +376,17 @@ const historyGroups: HistoryGroup[] = [
 .search-surface__history-thumb {
   flex: 0 0 auto;
   border-radius: 12px;
+}
+
+.search-surface__history-thumb--query {
+  width: 62px;
+  height: 62px;
+  background: #eaecf0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  box-sizing: border-box;
 }
 
 .search-surface__history-thumb--normal {

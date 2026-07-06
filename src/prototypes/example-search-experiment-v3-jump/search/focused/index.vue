@@ -214,6 +214,10 @@ function openArticle(result: WikiSearchResult) {
 
 
 onMounted(async () => {
+  const stored: string[] = JSON.parse(localStorage.getItem('v3_recent_searches') ?? '[]')
+  for (const q of [...stored].reverse()) {
+    if (!recentSearches.value.includes(q)) recentSearches.value.unshift(q)
+  }
   await nextTick()
   searchInput.value?.focus()
 })

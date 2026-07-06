@@ -188,6 +188,12 @@ function onSearchInput(event: Event) {
   scheduleSearch(searchQuery.value)
 }
 
+function onSearchEnter() {
+  const q = searchQuery.value.trim()
+  if (!q) return
+  router.push({ path: '/example-search-experiment-v2/search/results', query: { q } })
+}
+
 function clearListOrQuery() {
   if (isShowingResults.value) {
     searchQuery.value = ''
@@ -230,8 +236,21 @@ function selectLanguage(lang: 'en' | 'pt' | 'es') {
   nextTick(() => searchInput.value?.focus())
 }
 
+function saveToHistory(query: string) {
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const existing: { query: string; date: string }[] = JSON.parse(localStorage.getItem('v2_search_history') ?? '[]')
+  if (!existing.some(e => e.query === query && e.date === date)) {
+    localStorage.setItem('v2_search_history', JSON.stringify([{ query, date }, ...existing]))
+  }
+  const recents: string[] = JSON.parse(localStorage.getItem('v2_recent_searches') ?? '[]')
+  if (!recents.includes(query)) {
+    localStorage.setItem('v2_recent_searches', JSON.stringify([query, ...recents]))
+  }
+}
+
 function openArticle(result: WikiSemanticResult) {
   articleOpened = true
+  if (searchQuery.value.trim()) saveToHistory(searchQuery.value.trim())
   router.push({
     path: '/example-search-experiment-v2/article',
     query: {
@@ -367,6 +386,10 @@ function closeDive() {
 }
 
 onMounted(async () => {
+  const stored: string[] = JSON.parse(localStorage.getItem('v2_recent_searches') ?? '[]')
+  for (const q of [...stored].reverse()) {
+    if (!recentSearches.value.includes(q)) recentSearches.value.unshift(q)
+  }
   await nextTick()
   searchInput.value?.focus()
 })
@@ -399,6 +422,7 @@ onMounted(async () => {
               autofocus
               :value="searchQuery"
               @input="onSearchInput"
+              @keydown.enter="onSearchEnter"
             />
           </div>
         </header>
@@ -484,7 +508,7 @@ onMounted(async () => {
                       : 'Search within articles and get your answers as word-for-word passages.' }}
                 </p>
                 <button type="button" class="mwf-android-type-p focused-search-dive-card__btn" @click="openDive()">
-                  {{ selectedLanguage === 'pt' ? 'Mergulhe' : selectedLanguage === 'es' ? 'Bucear' : 'Dive' }}
+                  {{ selectedLanguage === 'pt' ? 'Encontrar' : selectedLanguage === 'es' ? 'Encontrar' : 'Find' }}
                 </button>
               </div>
               <div class="focused-search-dive-card__illus" aria-hidden="true">
@@ -553,7 +577,7 @@ onMounted(async () => {
           <div class="dive-sheet__scroll">
             <div class="dive-sheet__content mobile-android-type mobile-android-type--wireframe">
               <header class="dive-sheet__header">
-                <h2 class="mwf-android-type-h1 dive-sheet__title">Dive</h2>
+                <h2 class="mwf-android-type-h1 dive-sheet__title">Find</h2>
                 <span class="dive-sheet__beta-wrap">
                   <BetaBadge as="button" @click.stop="(e) => toggleBetaMenu('sheet', e)" />
                   <div v-if="betaMenuOpen === 'sheet'" class="beta-menu" role="menu">
@@ -665,7 +689,7 @@ onMounted(async () => {
       <div v-if="showDiveSettings" class="dive-settings-overlay" @click.self="showDiveSettings = false">
         <div class="dive-settings-sheet" role="dialog" aria-modal="true" aria-label="Dive settings">
           <div class="dive-settings-sheet__handle" aria-hidden="true" />
-          <h2 class="dive-settings-sheet__title">Dive settings</h2>
+          <h2 class="dive-settings-sheet__title">Settings</h2>
 
           <div class="dive-settings-sheet__row">
             <span class="dive-settings-sheet__row-label">Module visibility</span>
@@ -684,7 +708,7 @@ onMounted(async () => {
           <p class="dive-settings-sheet__helper">Turning it off will remove this module. You can turn it back on via app Settings</p>
 
           <h3 class="dive-settings-sheet__section-title">What is this feature?</h3>
-          <p class="dive-settings-sheet__body">With dive you can find answers to your questions inside Wikipedia articles. we will retrieve the exact Wikipedia passage and you can go straight to in in article to get more context.</p>
+          <p class="dive-settings-sheet__body">With find you can find answers to your questions inside Wikipedia articles. we will retrieve the exact Wikipedia passage and you can go straight to it in article to get more context.</p>
           <button type="button" class="dive-settings-sheet__learn-more" @click="showDiveSettings = false">Learn more</button>
         </div>
       </div>

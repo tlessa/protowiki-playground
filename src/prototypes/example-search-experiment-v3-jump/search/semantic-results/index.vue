@@ -109,8 +109,21 @@ function selectLanguage(lang: 'en' | 'pt' | 'es') {
 
 const router = useRouter()
 
+function saveToHistory(query: string) {
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const existing: { query: string; date: string }[] = JSON.parse(localStorage.getItem('v3_search_history') ?? '[]')
+  if (!existing.some(e => e.query === query && e.date === date)) {
+    localStorage.setItem('v3_search_history', JSON.stringify([{ query, date }, ...existing]))
+  }
+  const recents: string[] = JSON.parse(localStorage.getItem('v3_recent_searches') ?? '[]')
+  if (!recents.includes(query)) {
+    localStorage.setItem('v3_recent_searches', JSON.stringify([query, ...recents]))
+  }
+}
+
 function openArticle(result: WikiSearchResult) {
   w._v3CardTapped = true
+  if (searchQuery.value.trim()) saveToHistory(searchQuery.value.trim())
   router.push({
     path: '/example-search-experiment-v3-jump/article',
     query: {

@@ -105,7 +105,7 @@ const result = {
           <button class="dive-page__back" type="button" aria-label="Go back" @click="router.push('/example-search-experiment-v3-jump/search')">
             <span class="dive-page__back-arrow" aria-hidden="true" />
           </button>
-          <h1 class="dive-page__title">Dive straight to the passage</h1>
+          <h1 class="dive-page__title">Find</h1>
         </div>
       </header>
 
@@ -131,7 +131,7 @@ const result = {
         <span class="dive-page__mic" aria-hidden="true" />
       </label>
 
-      <button class="mwf-android-type-p dive-page__dive-btn" type="button" @click="router.push({ path: '/example-search-experiment-v3-jump/search/semantic-results', query: { q: searchQuery } })">Dive now</button>
+      <button class="mwf-android-type-p dive-page__dive-btn" type="button" @click="router.push({ path: '/example-search-experiment-v3-jump/search/semantic-results', query: { q: searchQuery } })">🧭 Find</button>
 
       <section class="dive-page__results">
         <p class="mwf-android-type-p dive-page__sample-query">{{ sampleQuery }}</p>

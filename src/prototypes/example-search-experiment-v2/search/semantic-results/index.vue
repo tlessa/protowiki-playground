@@ -81,8 +81,18 @@ function checkFeedbackTrigger() {
   }
 }
 
+function saveToHistory(query: string) {
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const entry = { query, date }
+  const existing: { query: string; date: string }[] = JSON.parse(localStorage.getItem('v2_search_history') ?? '[]')
+  if (!existing.some(e => e.query === query && e.date === date)) {
+    localStorage.setItem('v2_search_history', JSON.stringify([entry, ...existing]))
+  }
+}
+
 function openArticle(result: WikiSearchResult) {
   w._v2CardTapped = true
+  if (searchQuery.value.trim()) saveToHistory(searchQuery.value.trim())
   router.push({
     path: '/example-search-experiment-v2/article',
     query: {
