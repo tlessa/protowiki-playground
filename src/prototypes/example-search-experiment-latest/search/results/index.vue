@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
@@ -9,11 +10,92 @@ import '@/styles/mobile-android/index.css'
 definePage({
   meta: {
     title: 'Search results',
-    description: 'Search results screen for v2 prototype.',
+    description: 'Search results screen for latest prototype.',
   },
 })
 
 const router = useRouter()
+const route = useRoute()
+
+interface ResultItem { title: string; description: string }
+interface ResultCard { trail: string; highlight: string; faded: string; contributors: number; references: number }
+interface ResultSet { items: [ResultItem, ResultItem]; card: ResultCard }
+
+const RESULT_SETS: ResultSet[] = [
+  {
+    items: [
+      { title: 'Cat', description: 'Small domesticated carnivorous mammal' },
+      { title: 'Cat Stevens', description: 'British musician (born 1948)' },
+    ],
+    card: {
+      trail: 'Cat > Senses > Vision',
+      highlight: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.',
+      faded: 'This is partly the result of cat eyes having a much larger pupil than human eyes.',
+      contributors: 859,
+      references: 25,
+    },
+  },
+  {
+    items: [
+      { title: 'Moon', description: "Earth's only natural satellite" },
+      { title: 'Moonlight', description: '2016 American coming-of-age drama film' },
+    ],
+    card: {
+      trail: 'Moon > Formation > Giant-impact hypothesis',
+      highlight: 'The leading theory holds that the Moon formed from the debris left over after a Mars-sized body collided with the early Earth.',
+      faded: 'This event is thought to have occurred about 4.5 billion years ago.',
+      contributors: 1243,
+      references: 41,
+    },
+  },
+  {
+    items: [
+      { title: 'DNA', description: 'Molecule that carries genetic information' },
+      { title: 'Francis Crick', description: 'British molecular biologist (1916–2004)' },
+    ],
+    card: {
+      trail: 'DNA > Structure > Double helix',
+      highlight: 'The double-helix model of DNA structure was first published in the journal Nature in April 1953 by James Watson and Francis Crick.',
+      faded: 'The model showed two polynucleotide chains wound around a common axis.',
+      contributors: 2187,
+      references: 63,
+    },
+  },
+  {
+    items: [
+      { title: 'Roman Empire', description: 'Post-Republican period of ancient Rome' },
+      { title: 'Julius Caesar', description: 'Roman general and statesman (100–44 BC)' },
+    ],
+    card: {
+      trail: 'Roman Empire > Government > Roman Senate',
+      highlight: 'The Roman Senate was the governing body of the Roman Republic and later the Roman Empire, acting as an advisory council to magistrates.',
+      faded: 'Its membership was originally limited to patricians, though plebeians were later admitted.',
+      contributors: 3042,
+      references: 89,
+    },
+  },
+  {
+    items: [
+      { title: 'Jazz', description: 'Music genre originating in New Orleans' },
+      { title: 'Miles Davis', description: 'American jazz musician (1926–1991)' },
+    ],
+    card: {
+      trail: 'Jazz > Origins > New Orleans',
+      highlight: 'Jazz developed in New Orleans in the late 19th and early 20th centuries, drawing on blues, ragtime, and African musical traditions.',
+      faded: "The city's unique cultural mix of African, French, and Spanish influences gave birth to a wholly new musical language.",
+      contributors: 1564,
+      references: 52,
+    },
+  },
+]
+
+function pickSet(q: string): number {
+  let h = 0
+  for (const c of q) h = (h * 31 + c.charCodeAt(0)) & 0xffff
+  return h % 5
+}
+
+const current = computed(() => RESULT_SETS[pickSet((route.query.q as string) ?? '')])
 </script>
 
 <template>
@@ -64,24 +146,24 @@ const router = useRouter()
       <section class="results-content" aria-label="Search results">
         <article class="results-item">
           <div class="results-item__copy">
-            <h3 class="mwf-android-type-p results-item__title">Cat</h3>
-            <p class="mwf-android-type-p results-item__description">Small domesticated carnivorous mammal</p>
+            <h3 class="mwf-android-type-p results-item__title">{{ current.items[0].title }}</h3>
+            <p class="mwf-android-type-p results-item__description">{{ current.items[0].description }}</p>
           </div>
           <div class="results-item__thumb" aria-hidden="true" />
         </article>
 
         <SemanticResultCard
-          trail="Cat > Senses > Vision"
-          highlight="Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]:"
-          faded="This is partly the result of cat eyes"
-          :contributors="859"
-          :references="25"
+          :trail="current.card.trail"
+          :highlight="current.card.highlight"
+          :faded="current.card.faded"
+          :contributors="current.card.contributors"
+          :references="current.card.references"
         />
 
         <article class="results-item">
           <div class="results-item__copy">
-            <h3 class="mwf-android-type-p results-item__title">Cat Stevens</h3>
-            <p class="mwf-android-type-p results-item__description">British musician (born 1948)</p>
+            <h3 class="mwf-android-type-p results-item__title">{{ current.items[1].title }}</h3>
+            <p class="mwf-android-type-p results-item__description">{{ current.items[1].description }}</p>
           </div>
           <div class="results-item__thumb" aria-hidden="true" />
         </article>

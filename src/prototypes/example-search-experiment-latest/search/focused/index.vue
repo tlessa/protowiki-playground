@@ -191,7 +191,7 @@ function onSearchInput(event: Event) {
 function onSearchEnter() {
   const q = searchQuery.value.trim()
   if (!q) return
-  router.push({ path: '/example-search-experiment-latest/search/results', query: { q } })
+  openDive()
 }
 
 function clearListOrQuery() {
@@ -367,13 +367,42 @@ async function fetchDiveResults(query: string, signal?: AbortSignal): Promise<Wi
     .map(page => ({ title: page.title, extract: page.extract?.trim() || undefined }))
 }
 
-const HARDCODED_RESULTS: WikiSemanticResult[] = [
-  { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]' },
-  { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions, either naturally with scotopic vision or through a night-vision device. Night vision requires both sufficient spectral range and sufficient intensity range. Humans have poor night vision compared to many animals such as cats, dogs, foxes and rabbits, in part because the human eye lacks a tapetum lucidum' },
-  { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.[14]' },
-  { title: 'Night vision', sectionTitle: 'Intensity range', anchor: 'Intensity_range', extract: 'Many animals have better night vision than humans do, the result of one or more differences in the morphology and anatomy of their eyes. These include having a larger eyeball, a larger lens, a larger optical aperture (the pupils may expand to the physical limit of the eyelids), more rods than cones (or rods exclusively) in the retina, and a tapetum lucidum.' },
-  { title: 'Cat', sectionTitle: 'Whiskers', anchor: 'Whiskers', extract: 'These provide information on the width of gaps and on the location of objects in the dark, both by touching objects directly and by sensing air currents.' },
+// ── Query → card-set mapping ─────────────────────────────────────────
+// To add a new query: put the exact typed text (lowercase) as the key,
+// and the set index (0, 1, or 2) as the value. Add a matching set below.
+// Unrecognised queries fall back to set 0.
+const QUERY_DIVE_MAP: Record<string, number> = {
+  'can cats see in the dark': 0,
+  'how was the moon formed': 1,
+  'who discovered dna': 2,
+}
+
+const QUERY_CARD_SETS: WikiSemanticResult[][] = [
+  // Set 0 ── "can cats see in the dark"
+  [
+    { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.' },
+    { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions. Humans have poor night vision compared to many animals such as cats, in part because the human eye lacks a tapetum lucidum.' },
+    { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.' },
+  ],
+  // Set 1 ── "how was the moon formed"
+  [
+    { title: 'Moon', sectionTitle: 'Formation', anchor: 'Formation', extract: 'The leading theory holds that the Moon formed from the debris left over after a Mars-sized body collided with the early Earth about 4.5 billion years ago.' },
+    { title: 'Giant-impact hypothesis', sectionTitle: '', anchor: '', extract: 'The giant-impact hypothesis proposes that the Moon formed when a Mars-sized protoplanet, named Theia, collided with the early Earth.' },
+    { title: 'Lunar geology', sectionTitle: 'Composition', anchor: 'Composition', extract: 'The Moon is composed of crustal rock and a small iron core. The surface is covered in regolith — a layer of loose, fragmented material created by meteorite impacts.' },
+  ],
+  // Set 2 ── "who discovered dna"
+  [
+    { title: 'DNA', sectionTitle: 'Double helix', anchor: 'Double_helix', extract: 'The double-helix model of DNA structure was first published in the journal Nature in April 1953 by James Watson and Francis Crick.' },
+    { title: 'Rosalind Franklin', sectionTitle: '', anchor: '', extract: "Rosalind Franklin's X-ray diffraction images of DNA — particularly Photo 51 — were critical data that contributed to the discovery of the double-helix structure." },
+    { title: 'Francis Crick', sectionTitle: '', anchor: '', extract: 'Francis Crick, together with James Watson, proposed the double-helix structure of DNA, for which they received the Nobel Prize in Physiology or Medicine in 1962.' },
+  ],
 ]
+
+function pickDiveSet(query: string): WikiSemanticResult[] {
+  const key = query.toLowerCase().trim()
+  const idx = QUERY_DIVE_MAP[key] ?? 0
+  return QUERY_CARD_SETS[idx]
+}
 
 function openDive() {
   diveCount++
@@ -381,7 +410,7 @@ function openDive() {
     feedbackToastThumb.value = null
     showFeedbackToast.value = true
   }
-  diveResults.value = HARDCODED_RESULTS
+  diveResults.value = pickDiveSet(searchQuery.value)
   showDive.value = true
 }
 
