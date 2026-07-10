@@ -2,11 +2,13 @@
 interface Props {
   label?: string
   as?: 'span' | 'button'
+  caret?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   label: 'Beta',
   as: 'span',
+  caret: true,
 })
 
 const emit = defineEmits<{
@@ -25,7 +27,7 @@ function onClick(event: MouseEvent): void {
     :type="props.as === 'button' ? 'button' : undefined"
     @click="onClick"
   >
-    <slot>{{ props.label }}</slot>
+    <slot>{{ props.label }}</slot><template v-if="props.caret"> ▾</template>
   </component>
 </template>
 

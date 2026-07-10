@@ -1,8 +1,8 @@
 <script setup lang="ts">
 definePage({
   meta: {
-    title: '[deprecated]Example: Semantic Search Variant 2 - Jump',
-    description: 'Semantic search: Jump/Dive',
+    title: 'Example: Semantic Search Variant Latest',
+    description: 'Semantic search: explicit path on results display merged with onboarding',
   },
 })
 
@@ -13,7 +13,7 @@ import '@/styles/mobile-android/index.css'
 
 <template>
   <WireframeMobileWrapper>
-    <WireframeChromeWrapper active-tab="home" home-url="/example-search-experiment-v3-jump/community" search-url="/example-search-experiment-v3-jump/search" class="mobile-android-type mobile-android-type--wireframe">
+    <WireframeChromeWrapper active-tab="home" home-url="/example-search-experiment-latest/home" search-url="/example-search-experiment-latest/search" class="mobile-android-type mobile-android-type--wireframe">
       <template #header>
         <header class="home-header" aria-label="App header">
             <!--  Wikipedia logo -->
