@@ -1,8 +1,8 @@
 <script setup lang="ts">
 definePage({
   meta: {
-    title: 'Example: Semantic Search Variant Latest',
-    description: 'Semantic search: explicit path on results display merged with onboarding',
+    title: 'Example: Semantic Search Prototype',
+    description: 'Latest iteration of the semantic search project (July08)',
   },
 })
 
