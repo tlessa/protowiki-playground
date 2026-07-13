@@ -6,6 +6,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import BetaBadge from '@/components/BetaBadge.vue'
 import LottiePlayer from '@/components/LottiePlayer.vue'
+import SemanticResultCard from '@/components/SemanticResultCard.vue'
 import WireframeMobileWrapper from '@/components/WireframeMobileWrapper.vue'
 import WireframeChromeWrapper from '@/components/chrome/WireframeChromeWrapper.vue'
 import { wikimediaApiFetchHeaders, wikiHostFromLang } from '@/config'
@@ -293,6 +294,7 @@ interface WikiSemanticResult {
   extract?: string
   sectionTitle?: string
   anchor?: string
+  thumbnailUrl?: string
 }
 
 const diveResults = ref<WikiSemanticResult[]>([])
@@ -380,9 +382,9 @@ const QUERY_DIVE_MAP: Record<string, number> = {
 const QUERY_CARD_SETS: WikiSemanticResult[][] = [
   // Set 0 ── "can cats see in the dark"
   [
-    { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.' },
-    { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions. Humans have poor night vision compared to many animals such as cats, in part because the human eye lacks a tapetum lucidum.' },
-    { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.' },
+    { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]: 43', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/330px-Cat_August_2010-4.jpg' },
+    { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions. Humans have poor night vision compared to many animals such as cats, in part because the human eye lacks a tapetum lucidum.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Nightvision.jpg/330px-Nightvision.jpg' },
+    { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Bovine_Tapetum_Lucidum.jpg/330px-Bovine_Tapetum_Lucidum.jpg' },
   ],
   // Set 1 ── "how was the moon formed"
   [
@@ -679,28 +681,15 @@ onMounted(async () => {
                   <p class="mwf-android-type-p dive-sheet__status">No results found.</p>
                 </li>
                 <li v-for="result in diveResults" :key="result.title">
-                  <article class="dive-semantic-card" role="button" tabindex="0" @click="openArticle(result)">
-                    <div class="dive-semantic-card__header">
-                      <span class="dive-semantic-card__thumb" aria-hidden="true" />
-                      <p class="mwf-android-type-small dive-semantic-card__trail">
-                        {{ result.title }}{{ result.sectionTitle ? ` > ${result.sectionTitle}` : '' }}
-                      </p>
-                    </div>
-                    <div class="dive-semantic-card__snippet">
-                      <span class="mwf-android-type-p dive-semantic-card__highlight">
-                        <span class="dive-semantic-card__quote" aria-hidden="true">&#x201C;</span>{{ result.extract ?? result.title }}
-                      </span>
-                    </div>
-                    <div class="dive-semantic-card__bottom">
-                      <span class="mwf-android-type-small dive-semantic-card__meta-item">
-                        {{ dummyMeta(result.title).contributors }} contributors
-                      </span>
-                      <span class="dive-semantic-card__meta-dot" aria-hidden="true">·</span>
-                      <span class="mwf-android-type-small dive-semantic-card__meta-item">
-                        {{ dummyMeta(result.title).references }} references
-                      </span>
-                    </div>
-                  </article>
+                  <SemanticResultCard
+                    :trail="`${result.title}${result.sectionTitle ? ` > ${result.sectionTitle}` : ''}`"
+                    :highlight="result.extract ?? result.title"
+                    :contributors="dummyMeta(result.title).contributors"
+                    :references="dummyMeta(result.title).references"
+                    :thumbnail-url="result.thumbnailUrl"
+                    style="cursor: pointer"
+                    @click="openArticle(result)"
+                  />
                 </li>
               </ul>
             </div>
@@ -1307,54 +1296,9 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-.dive-semantic-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.dive-semantic-card__thumb {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background:
-    linear-gradient(#c8ccd1 0 0) center 10px / 22px 2px,
-    linear-gradient(#c8ccd1 0 0) center 16px / 16px 2px,
-    linear-gradient(120deg, #eaecf0, #d4d9df);
-  background-repeat: no-repeat;
-}
-
-.dive-semantic-card__trail {
-  margin: 0;
-  color: #72777d;
-}
-
 .dive-semantic-card__snippet {
   display: grid;
   gap: 2px;
-}
-
-.dive-semantic-card__highlight {
-  display: block;
-  margin: 0;
-  padding: 0 4px;
-  background: #ece7a5;
-  color: #202122;
-}
-
-.dive-semantic-card__quote {
-  font-size: 48px;
-  font-weight: 700;
-  line-height: 1;
-  color: #202122;
-  user-select: none;
-}
-
-.dive-semantic-card__faded {
-  display: block;
-  margin: 0;
-  color: #a2a9b1;
 }
 
 .dive-semantic-card__bottom {
@@ -1365,9 +1309,6 @@ onMounted(async () => {
   margin: 0 -12px;
   border-top: 1px solid #eaecf0;
 }
-
-.dive-semantic-card__meta-item { color: #72777d; }
-.dive-semantic-card__meta-dot  { color: #c8ccd1; }
 
 @keyframes dive-skeleton-shimmer {
   0%   { background-position: -200% center; }

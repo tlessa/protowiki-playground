@@ -46,7 +46,7 @@
   --proto-card-thumb-grad-end: #d4d9df;
   --proto-card-trail: #72777d;
   --proto-card-quote: #202122;
-  --proto-card-highlight-bg: #ece7a5;
+  --proto-card-highlight-bg: #ffd966;
   --proto-card-highlight-text: #202122;
   --proto-card-faded: #a2a9b1;
   --proto-card-bottom-border: #eaecf0;
@@ -73,7 +73,7 @@ html[data-fidelity='wireframe'] {
   --proto-card-thumb-grad-end: #c8c8c8;
   --proto-card-trail: #666666;
   --proto-card-quote: #303030;
-  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-bg: #ffd966;
   --proto-card-highlight-text: #232323;
   --proto-card-faded: #7c7c7c;
   --proto-card-bottom-border: #cfcfcf;
@@ -100,7 +100,7 @@ html[data-fidelity='high'][data-platform='android'] {
   --proto-card-thumb-grad-end: #d4d9df;
   --proto-card-trail: #72777d;
   --proto-card-quote: #202122;
-  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-bg: #ffd966;
   --proto-card-highlight-text: #202122;
   --proto-card-faded: #a2a9b1;
   --proto-card-bottom-border: #eaecf0;
@@ -128,7 +128,7 @@ html[data-fidelity='high'][data-platform='ios'] {
   --proto-card-thumb-grad-end: #d4d9df;
   --proto-card-trail: #72777d;
   --proto-card-quote: #202122;
-  --proto-card-highlight-bg: #ffcc33;
+  --proto-card-highlight-bg: #ffd966;
   --proto-card-highlight-text: #202122;
   --proto-card-faded: #a2a9b1;
   --proto-card-bottom-border: #eaecf0;
