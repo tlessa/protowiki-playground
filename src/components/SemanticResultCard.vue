@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
 defineProps<{
   trail: string
   highlight: string
@@ -9,6 +11,15 @@ defineProps<{
 }>()
 
 defineEmits<{ click: [] }>()
+
+const expanded = ref(false)
+const isClamped = ref(false)
+const highlightWrapRef = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  const el = highlightWrapRef.value
+  if (el) isClamped.value = el.scrollHeight > el.clientHeight
+})
 </script>
 
 <template>
@@ -17,6 +28,29 @@ defineEmits<{ click: [] }>()
     v-bind="$attrs"
     @click="$emit('click')"
   >
+    <div class="semantic-result-card__snippet">
+      <div class="semantic-result-card__highlight-outer">
+        <div
+          ref="highlightWrapRef"
+          class="semantic-result-card__highlight-wrap"
+          :class="{ 'semantic-result-card__highlight-wrap--clamped': !expanded }"
+        >
+          <span class="mwf-android-type-p semantic-result-card__highlight">
+            <span class="semantic-result-card__quote" aria-hidden="true">&#x201C;</span>{{ highlight }}
+          </span>
+        </div>
+        <button
+          v-if="isClamped && !expanded"
+          class="semantic-result-card__expand"
+          type="button"
+          aria-label="Show more"
+          @click.stop="expanded = true"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <span v-if="faded" class="mwf-android-type-p semantic-result-card__faded">{{ faded }}</span>
+    </div>
     <div class="semantic-result-card__header">
       <span
         class="semantic-result-card__thumb"
@@ -24,12 +58,6 @@ defineEmits<{ click: [] }>()
         aria-hidden="true"
       />
       <p class="mwf-android-type-small semantic-result-card__trail">{{ trail }}</p>
-    </div>
-    <div class="semantic-result-card__snippet">
-      <span class="mwf-android-type-p semantic-result-card__highlight">
-        <span class="semantic-result-card__quote" aria-hidden="true">&#x201C;</span>{{ highlight }}
-      </span>
-      <span v-if="faded" class="mwf-android-type-p semantic-result-card__faded">{{ faded }}</span>
     </div>
     <div v-if="contributors !== undefined || references !== undefined" class="semantic-result-card__bottom">
       <span class="mwf-android-type-small semantic-result-card__meta-item">
@@ -84,24 +112,53 @@ defineEmits<{ click: [] }>()
   gap: 2px;
 }
 
+.semantic-result-card__highlight-outer {
+  position: relative;
+}
+
+.semantic-result-card__highlight-wrap {
+    margin-top: -32px;/* styles here apply whether clamped or not */
+}
+.semantic-result-card__highlight-wrap--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
+  padding-right: 28px;
+}
+
 .semantic-result-card__highlight {
-  display: flex;
-  align-items: flex-start;
-  gap: 2px;
-  margin: 0;
-  padding: 0 4px;
+  display: inline;
+  padding: 2px 4px;
   background: var(--proto-card-highlight-bg);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   color: var(--proto-card-highlight-text);
 }
 
 .semantic-result-card__quote {
-  flex-shrink: 0;
+  position: relative;
+  top: 40px;
   font-size: 4em;
   font-weight: 700;
   line-height: 1;
-  margin-top: 0;
   color: var(--proto-card-quote);
   user-select: none;
+}
+
+.semantic-result-card__expand {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  background: var(--proto-card-bg);
+  border: none;
+  padding: 1px 0 1px 6px;
+  cursor: pointer;
+  color: #3366cc;
+  line-height: inherit;
 }
 
 .semantic-result-card__faded {
