@@ -747,7 +747,7 @@ onMounted(async () => {
   align-items: center;
   gap: var(--mobile-android-space-sm);
   min-height: 64px;
-  padding: 8px 12px 10px;
+  padding: 0px 12px 0px;
   background: #fff;
   border-bottom: 1px solid #eaecf0;
 }
