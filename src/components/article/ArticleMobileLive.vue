@@ -72,24 +72,98 @@ function firstCitationNum(extract: string): string | null {
   return match ? match[1] : null
 }
 
-// Wrap the start of a paragraph in a <mark> up to (and including) the <sup>
-// that matches the last citation in the extract. Falls back to the whole paragraph.
+// Walk text nodes in `container`, build a concatenated string, then return a
+// Range that exactly spans `needle` within that string. Returns null if not found.
+// Tries three strategies in order so minor Wikipedia typography differences
+// (en/em dashes, non-breaking spaces) don't break the highlight:
+//   1. Exact string match
+//   2. Dash-normalized match (–/— → -)
+//   3. Fuzzy: locate start by first 6 words, locate end by last 5 words
+function findTextRange(container: HTMLElement, needle: string): Range | null {
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  const starts: number[] = []
+  let full = ''
+  let n: Text | null
+  while ((n = walker.nextNode() as Text | null)) {
+    starts.push(full.length)
+    full += n.textContent ?? ''
+    nodes.push(n)
+  }
+
+  const normD = (s: string) => s.replace(/[–— ]/g, (c) => c === ' ' ? ' ' : '-')
+
+  function buildRange(startIdx: number, endIdx: number): Range | null {
+    let startNode: Text | null = null, startOff = 0, endNode: Text | null = null, endOff = 0
+    for (let i = 0; i < nodes.length; i++) {
+      const len = nodes[i].textContent?.length ?? 0
+      if (!startNode && startIdx < starts[i] + len) { startNode = nodes[i]; startOff = startIdx - starts[i] }
+      if (!endNode && endIdx <= starts[i] + len) { endNode = nodes[i]; endOff = endIdx - starts[i] }
+    }
+    if (!startNode || !endNode) return null
+    const range = document.createRange()
+    range.setStart(startNode, startOff)
+    range.setEnd(endNode, endOff)
+    return range
+  }
+
+  // 1. Exact match
+  let idx = full.indexOf(needle)
+  if (idx !== -1) return buildRange(idx, idx + needle.length)
+
+  // 2. Dash/NBSP-normalized match (indices stay valid — 1-to-1 substitution)
+  idx = normD(full).indexOf(normD(needle))
+  if (idx !== -1) return buildRange(idx, idx + needle.length)
+
+  // 3. Fuzzy: anchor on first 6 words (start) and last 5 words (end)
+  const words = needle.trim().split(/\s+/)
+  const headText = words.slice(0, 6).join(' ')
+  const tailText = words.slice(-5).join(' ')
+  const nFull = normD(full)
+  let headIdx = nFull.indexOf(normD(headText))
+  if (headIdx === -1) return null
+  let tailIdx = nFull.indexOf(normD(tailText), headIdx)
+  if (tailIdx === -1) return null
+  return buildRange(headIdx, tailIdx + tailText.length)
+}
+
+function applyMark(range: Range) {
+  const mark = document.createElement('mark')
+  mark.className = 'article-highlight'
+  mark.style.cssText = 'background: #ffd966 !important; border-radius: 2px; padding: 0 1px;'
+  try {
+    // Fast path: works when the range doesn't partially contain any element node.
+    range.surroundContents(mark)
+  } catch {
+    // surroundContents throws when an inline element (e.g. <a>, <sup>) is only
+    // partially within the range. extractContents handles this by cloning boundary
+    // nodes, so the mark still wraps exactly the right text.
+    const frag = range.extractContents()
+    mark.appendChild(frag)
+    range.insertNode(mark)
+  }
+}
+
+// Highlight the exact extract text inside `para`. Tries exact-text match first,
+// then citation-based (for extracts like "...[58]: 43"), then whole-paragraph fallback.
 function highlightParagraph(para: HTMLElement, extract: string) {
+  // 1. Exact text match — finds precise start/end within any sentence
+  const exactRange = findTextRange(para, extract.trim())
+  if (exactRange) { try { applyMark(exactRange); return } catch { /* fall through */ } }
+
+  // 2. Citation-based — wraps from paragraph start to the matching <sup>
   const citNum = firstCitationNum(extract)
-  const sups = Array.from(para.querySelectorAll('sup'))
   const endSup = citNum
-    ? sups.find(s => s.textContent?.replace(/[\[\]\s]/g, '') === citNum)
+    ? Array.from(para.querySelectorAll('sup')).find(s => s.textContent?.replace(/[\[\]\s]/g, '') === citNum)
     : null
   try {
     const range = document.createRange()
     range.setStart(para, 0)
     if (endSup) range.setEndAfter(endSup)
     else range.setEnd(para, para.childNodes.length)
-    const mark = document.createElement('mark')
-    mark.className = 'article-highlight'
-    range.surroundContents(mark)
+    applyMark(range)
   } catch {
-    para.style.background = '#ece7a5'
+    para.style.cssText += '; background: #ffd966 !important; border-radius: 2px; padding: 2px 4px;'
   }
 }
 
@@ -109,6 +183,21 @@ function scrollToAnchor(container: HTMLElement, anchor: string, extract?: string
   }, 100)
 }
 
+// If a <ul> immediately follows `para` and its first <li> text appears in
+// the extract, highlight every <li> — handles articles like RNA where the
+// intro sentence is a <p> and the bullet points are a sibling <ul>.
+function highlightFollowingList(para: HTMLElement, extract: string) {
+  const next = para.nextElementSibling
+  if (next?.tagName !== 'UL') return
+  const firstLi = next.querySelector('li')
+  if (!firstLi) return
+  const probe = firstLi.textContent?.trim().slice(0, 24).toLowerCase() ?? ''
+  if (!probe || !extract.toLowerCase().includes(probe)) return
+  next.querySelectorAll<HTMLElement>('li').forEach(li => {
+    li.style.cssText += '; background: #ffd966 !important; border-radius: 2px; padding: 1px 2px;'
+  })
+}
+
 // For articles with no anchor (e.g. Night vision lead): find the paragraph
 // whose text contains the start of the extract, highlight it, and scroll to it.
 function scrollToExtract(container: HTMLElement, extract: string) {
@@ -119,6 +208,7 @@ function scrollToExtract(container: HTMLElement, extract: string) {
   )
   if (!para) return
   highlightParagraph(para, extract)
+  highlightFollowingList(para, extract)
   setTimeout(() => {
     const rect = para.getBoundingClientRect()
     window.scrollBy({ top: rect.top - 90, behavior: 'instant' })

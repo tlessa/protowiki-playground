@@ -62,8 +62,8 @@ const feedbackToastExpanded = ref(false)
 const feedbackToastText = ref('')
 const showThanksToast = ref(false)
 let thanksTimer: ReturnType<typeof setTimeout> | null = null
-let diveCount = 0
-let articleOpened = false
+let diveShownNoArticle = false
+let feedbackShown = sessionStorage.getItem('latest_feedback_shown') === '1'
 
 function selectThumb(thumb: 'up' | 'down') {
   feedbackToastThumb.value = thumb
@@ -250,7 +250,7 @@ function saveToHistory(query: string) {
 }
 
 function openArticle(result: WikiSemanticResult) {
-  articleOpened = true
+  diveShownNoArticle = false
   if (searchQuery.value.trim()) saveToHistory(searchQuery.value.trim())
   router.push({
     path: '/example-search-experiment-latest/article',
@@ -266,8 +266,6 @@ function openArticle(result: WikiSemanticResult) {
 
 const showDive = ref(false)
 
-const betaMenuOpen = ref<'card' | 'sheet' | null>(null)
-
 const showDiveSettings = ref(false)
 const moduleVisible = ref(true)
 const showHideToast = ref(false)
@@ -280,18 +278,13 @@ function hideModule() {
   hideToastTimer = setTimeout(() => { showHideToast.value = false }, 4000)
 }
 
-function toggleBetaMenu(source: 'card' | 'sheet', e: Event) {
-  e.stopPropagation()
-  betaMenuOpen.value = betaMenuOpen.value === source ? null : source
-}
 
-function closeBetaMenu() {
-  betaMenuOpen.value = null
-}
 
 interface WikiSemanticResult {
   title: string
   extract?: string
+  preBody?: string
+  body?: string
   sectionTitle?: string
   anchor?: string
   thumbnailUrl?: string
@@ -375,45 +368,62 @@ async function fetchDiveResults(query: string, signal?: AbortSignal): Promise<Wi
 // Unrecognised queries fall back to set 0.
 const QUERY_DIVE_MAP: Record<string, number> = {
   'can cats see in the dark': 0,
-  'how was the moon formed': 1,
-  'who discovered dna': 2,
+  'how do cranes work': 1,
+  'rna vs dna': 2,
+}
+
+// keyword fallback — catches typos / partial queries / missing punctuation
+const QUERY_KEYWORDS: [RegExp, number][] = [
+  [/\b(cat|cats|dark|night)\b/, 0],
+  [/\b(crane|cranes)\b/, 1],
+  [/\b(dna|rna)\b/, 2],
+]
+
+function normalizeQuery(s: string): string {
+  return s.toLowerCase().trim().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ')
 }
 
 const QUERY_CARD_SETS: WikiSemanticResult[][] = [
   // Set 0 ── "can cats see in the dark"
   [
-    { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]: 43', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/330px-Cat_August_2010-4.jpg' },
-    { title: 'Night vision', sectionTitle: '', anchor: '', extract: 'Night vision is the ability to see in low-light conditions. Humans have poor night vision compared to many animals such as cats, in part because the human eye lacks a tapetum lucidum.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Nightvision.jpg/330px-Nightvision.jpg' },
-    { title: 'Tapetum lucidum', sectionTitle: 'Cats', anchor: 'Cats', extract: 'While enhancing night vision, increased light scatter within the tapetum slightly compromises visual acuity.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Bovine_Tapetum_Lucidum.jpg/330px-Bovine_Tapetum_Lucidum.jpg' },
+    { title: 'Cat', sectionTitle: 'Vision', anchor: 'Vision', extract: 'Cats have excellent night vision and can see at one sixth the light level required for human vision.[58]: 43', body: 'This is partly the result of cat eyes having a tapetum lucidum, which reflects any light that passes through the retina back into the eye, thereby increasing the eye\'s sensitivity to dim light. Large pupils are an adaptation to dim light. The domestic cat has slit pupils, which allow it to focus bright light without chromatic aberration.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/330px-Cat_August_2010-4.jpg' },
+    { title: 'Cat senses', sectionTitle: 'Sight', anchor: '', preBody: 'Cats have a tapetum lucidum, which is a reflective layer behind the retina that sends light that passes through the retina back into the eye. They also have a high number of rods in their retina that are sensitive to dim light.', extract: 'While these improve the ability to see in darkness and enable cats to see using roughly one-sixth the amount of light that humans need, they appear to reduce net visual acuity, thus detracting when light is abundant.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/CatVibrissaeFullFace.JPG/330px-CatVibrissaeFullFace.JPG' },
+    { title: 'Sense', sectionTitle: 'Vision', anchor: '', extract: 'Cats have the ability to see in low light, which is due to muscles surrounding their irides –which contract and expand their pupils–as well as to the tapetum lucidum, a reflective membrane that optimizes the image.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/SensoryProcessing.png/330px-SensoryProcessing.png' },
   ],
-  // Set 1 ── "how was the moon formed"
+  // Set 1 ── "How do cranes work?"
   [
-    { title: 'Moon', sectionTitle: 'Formation', anchor: 'Formation', extract: 'The leading theory holds that the Moon formed from the debris left over after a Mars-sized body collided with the early Earth about 4.5 billion years ago.' },
-    { title: 'Giant-impact hypothesis', sectionTitle: '', anchor: '', extract: 'The giant-impact hypothesis proposes that the Moon formed when a Mars-sized protoplanet, named Theia, collided with the early Earth.' },
-    { title: 'Lunar geology', sectionTitle: 'Composition', anchor: 'Composition', extract: 'The Moon is composed of crustal rock and a small iron core. The surface is covered in regolith — a layer of loose, fragmented material created by meteorite impacts.' },
+    { title: 'Crane (bird)', sectionTitle: '', anchor: '', extract: 'They are opportunistic feeders that change their diets according to the season and their own nutrient requirements. They eat a range of items from small rodents, eggs of birds, fish, amphibians, and insects to grain and berries.', body: 'Cranes construct platform nests in shallow water, and typically lay a clutch of two eggs at a time. Both parents help to rear the young, which remain with them until the next breeding season. Most species of cranes have been affected by human activities and are at the least classified as threatened, if not critically endangered. The plight of the whooping cranes of North America inspired some of the first US legislation to protect endangered species...', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Antigone_canadensis_353731480_%28cropped%29.jpg/330px-Antigone_canadensis_353731480_%28cropped%29.jpg' },
+    { title: 'Crane (machine)', sectionTitle: '', anchor: '', extract: 'A crane is a machine used to move materials both vertically and horizontally, utilizing a system of a boom, hoist, wire ropes or chains, and sheaves for lifting and relocating heavy objects within the swing of its boom.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Crane_machine_slewing_platform.svg/330px-Crane_machine_slewing_platform.svg.png' },
+    { title: 'Common crane', sectionTitle: 'Sociality', anchor: '', extract: 'Cranes use a kleptoparasitic strategy to recover from temporary reductions in feeding rate, particularly when the rate is below the threshold of intake necessary for survival.', body: 'When crane density is very high, such disturbances during foraging can occur frequently and reduce the flocks overall feeding rate.', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Common_crane_grus_grus.jpg/330px-Common_crane_grus_grus.jpg' },
   ],
-  // Set 2 ── "who discovered dna"
+  // Set 2 ── "rna vs dna"
   [
-    { title: 'DNA', sectionTitle: 'Double helix', anchor: 'Double_helix', extract: 'The double-helix model of DNA structure was first published in the journal Nature in April 1953 by James Watson and Francis Crick.' },
-    { title: 'Rosalind Franklin', sectionTitle: '', anchor: '', extract: "Rosalind Franklin's X-ray diffraction images of DNA — particularly Photo 51 — were critical data that contributed to the discovery of the double-helix structure." },
-    { title: 'Francis Crick', sectionTitle: '', anchor: '', extract: 'Francis Crick, together with James Watson, proposed the double-helix structure of DNA, for which they received the Nobel Prize in Physiology or Medicine in 1962.' },
+    { title: 'RNA', sectionTitle: 'Differences between DNA and RNA', anchor: '', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Hybridogenesis_in_water_frogs_gametes.svg/330px-Hybridogenesis_in_water_frogs_gametes.svg.png', extract: 'The chemical structure of RNA is very similar to that of DNA, but differs in three primary ways: - Unlike double-stranded DNA, RNA is usually a single-stranded molecule (ssRNA) in many of its biological roles and consists of much shorter chains of nucleotides. However, double-stranded RNA (dsRNA) can form and (moreover) a single RNA molecule can, by complementary base pairing, form intrastrand double helixes, as in tRNA. - While the sugar-phosphate "backbone" of DNA contains deoxyribose, RNA contains ribose instead. Ribose has a hydroxyl group attached to the pentose ring in the 2 position, whereas deoxyribose does not. The hydroxyl groups in the ribose backbone make RNA more chemically labile than DNA by lowering the activation energy of hydrolysis. - The complementary base to adenine in DNA is thymine, whereas in RNA, it is uracil, which is an unmethylated form of thymine....' },
+    { title: 'RNA world', sectionTitle: 'Comparison of DNA and RNA structure', anchor: '', extract: "RNA is thought to have preceded DNA, because of their ordering in the biosynthetic pathways. The deoxyribonucleotides used to make DNA are made from ribonucleotides, the building blocks of RNA, by removing the 2'-hydroxyl group.", body: "As a consequence, a cell must have the ability to make RNA before it can make DNA...", thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Difference_DNA_RNA-EN.svg/330px-Difference_DNA_RNA-EN.svg.png' },
+    { title: 'RNA origami', sectionTitle: 'Comparison with DNA origami', anchor: '', extract: 'RNA and DNA nanostructures are used for the organization and coordination of important molecular processes. However, there exist several distinct differences between the fundamental structure and applications between the two. Although inspired by the DNA origami techniques established by Paul Rothemund, the process for RNA origami is vastly different. RNA origami is a much newer process than DNA origami;', body: 'DNA origami has been studied for approximately a decade now, while the study of RNA origami has only recently begun...', thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Rna_origami_adaption.png/330px-Rna_origami_adaption.png' },
   ],
 ]
 
 function pickDiveSet(query: string): WikiSemanticResult[] {
-  const key = query.toLowerCase().trim()
-  const idx = QUERY_DIVE_MAP[key] ?? 0
-  return QUERY_CARD_SETS[idx]
+  const q = normalizeQuery(query)
+  const exact = QUERY_DIVE_MAP[q]
+  if (exact !== undefined) return QUERY_CARD_SETS[exact]
+  for (const [pattern, idx] of QUERY_KEYWORDS) {
+    if (pattern.test(q)) return QUERY_CARD_SETS[idx]
+  }
+  return QUERY_CARD_SETS[0]
 }
 
 function openDive() {
-  diveCount++
-  if (diveCount >= 2 && !articleOpened && !showFeedbackToast.value) {
+  if (diveShownNoArticle && !feedbackShown) {
+    feedbackShown = true
+    sessionStorage.setItem('latest_feedback_shown', '1')
     feedbackToastThumb.value = null
     showFeedbackToast.value = true
   }
   diveResults.value = pickDiveSet(searchQuery.value)
   showDive.value = true
+  diveShownNoArticle = true
 }
 
 function closeDive() {
@@ -610,12 +620,7 @@ onMounted(async () => {
               <header class="dive-sheet__header">
                 <h2 class="mwf-android-type-h1 dive-sheet__title">Find</h2>
                 <span class="dive-sheet__beta-wrap">
-                  <BetaBadge as="button" :caret="false" @click.stop="(e) => toggleBetaMenu('sheet', e)" />
-                  <div v-if="betaMenuOpen === 'sheet'" class="beta-menu" role="menu">
-                    <button type="button" class="beta-menu__item" role="menuitem" @click="closeBetaMenu">Learn more</button>
-                    <button type="button" class="beta-menu__item beta-menu__item--danger" role="menuitem" @click="closeBetaMenu">Turn off this experiment</button>
-                  </div>
-                  <div v-if="betaMenuOpen === 'sheet'" class="beta-menu__backdrop" @click="closeBetaMenu" />
+                  <BetaBadge :caret="false" />
                 </span>
               </header>
 
@@ -683,7 +688,9 @@ onMounted(async () => {
                 <li v-for="result in diveResults" :key="result.title">
                   <SemanticResultCard
                     :trail="`${result.title}${result.sectionTitle ? ` > ${result.sectionTitle}` : ''}`"
+                    :pre-body="result.preBody"
                     :highlight="result.extract ?? result.title"
+                    :body="result.body"
                     :contributors="dummyMeta(result.title).contributors"
                     :references="dummyMeta(result.title).references"
                     :thumbnail-url="result.thumbnailUrl"
@@ -1049,7 +1056,7 @@ onMounted(async () => {
   padding: 8px 20px;
   border: 0;
   border-radius: 8px;
-  background: #72777d;
+  background: var(--progressive, #36C);
   color: #fff;
   cursor: pointer;
 }
@@ -1175,7 +1182,7 @@ onMounted(async () => {
   margin-inline: auto;
   background: #fffbfe;
   border-radius: 28px 28px 0 0;
-  max-height: 78vh;
+  max-height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
 }

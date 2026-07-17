@@ -22,8 +22,11 @@ const thumbRating = ref<'up' | 'down' | null>(null)
 const feedbackText = ref('')
 
 onMounted(() => {
-  if (highlight.value) {
-    setTimeout(() => { showFeedback.value = true }, 3000)
+  if (highlight.value && sessionStorage.getItem('latest_article_feedback_shown') !== '1') {
+    setTimeout(() => {
+      sessionStorage.setItem('latest_article_feedback_shown', '1')
+      showFeedback.value = true
+    }, 3000)
   }
 })
 

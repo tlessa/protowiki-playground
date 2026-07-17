@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue'
 defineProps<{
   trail: string
   highlight: string
+  body?: string
   faded?: string
   contributors?: number
   references?: number
@@ -37,7 +38,7 @@ onMounted(() => {
         >
           <span class="mwf-android-type-p semantic-result-card__highlight">
             <span class="semantic-result-card__quote" aria-hidden="true">&#x201C;</span>{{ highlight }}
-          </span>
+          </span><span v-if="body" class="mwf-android-type-p semantic-result-card__body"> {{ body }}</span>
         </div>
         <button
           v-if="isClamped && !expanded"
@@ -159,6 +160,11 @@ onMounted(() => {
   cursor: pointer;
   color: #3366cc;
   line-height: inherit;
+}
+
+.semantic-result-card__body {
+  display: inline;
+  color: var(--color-base, #202122);
 }
 
 .semantic-result-card__faded {
