@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { cdxIconTrash } from '@wikimedia/codex-icons'
+import { cdxIconClose, cdxIconTrash } from '@wikimedia/codex-icons'
 import { RouterLink, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/AppIcon.vue'
@@ -472,6 +472,15 @@ onMounted(async () => {
               @input="onSearchInput"
               @keydown.enter="onSearchEnter"
             />
+            <button
+              v-if="searchQuery"
+              type="button"
+              class="focused-search-header__clear"
+              aria-label="Clear search"
+              @click="clearListOrQuery"
+            >
+              <AppIcon :codex-icon="cdxIconClose" size="small" />
+            </button>
           </div>
         </header>
 
@@ -792,12 +801,30 @@ onMounted(async () => {
   color: #54595d;
 }
 
+.focused-search-header__input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.focused-search-header__clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #54595d;
+  cursor: pointer;
+}
+
 .focused-search-languages {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   min-height: 52px;
-  padding: 8px 16px 0 8px;
+  padding: 0px 16px 0 8px;
   background: #ffffff;
   box-shadow: 0 4px 1px rgba(157, 157, 157, 0.25);
 }
@@ -893,7 +920,7 @@ onMounted(async () => {
   flex-direction: column;
   gap: 12px;
   min-height: 0;
-  padding: 16px 16px 20px;
+  padding: 0px 16px 20px;
   background: #FFFFFF;
 }
 
