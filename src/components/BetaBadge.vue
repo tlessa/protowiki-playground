@@ -38,7 +38,7 @@ function onClick(event: MouseEvent): void {
   align-items: center;
   padding: 4px 8px;
   border-radius: 100px;
-  background: var(--progressive, #36C);
+  background: #72777D;
   color: #fff;
   font-family: var(--mobile-android-type-toolbar-font-family, sans-serif);
   font-size: 10px;

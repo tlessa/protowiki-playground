@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 
 defineProps<{
   trail: string
@@ -17,7 +17,8 @@ const expanded = ref(false)
 const isClamped = ref(false)
 const highlightWrapRef = ref<HTMLElement | null>(null)
 
-onMounted(() => {
+onMounted(async () => {
+  await nextTick()
   const el = highlightWrapRef.value
   if (el) isClamped.value = el.scrollHeight > el.clientHeight
 })
@@ -41,11 +42,12 @@ onMounted(() => {
           </span><span v-if="body" class="mwf-android-type-p semantic-result-card__body"> {{ body }}</span>
         </div>
         <button
-          v-if="isClamped && !expanded"
+          v-if="isClamped"
           class="semantic-result-card__expand"
+          :class="{ 'semantic-result-card__expand--up': expanded }"
           type="button"
-          aria-label="Show more"
-          @click.stop="expanded = true"
+          :aria-label="expanded ? 'Show less' : 'Show more'"
+          @click.stop="expanded = !expanded"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -115,10 +117,13 @@ onMounted(() => {
 
 .semantic-result-card__highlight-outer {
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .semantic-result-card__highlight-wrap {
-    margin-top: -32px;/* styles here apply whether clamped or not */
+  margin-top: -32px;
+  padding-right: 28px;
 }
 .semantic-result-card__highlight-wrap--clamped {
   display: -webkit-box;
@@ -126,7 +131,6 @@ onMounted(() => {
   -webkit-line-clamp: 6;
   line-clamp: 6;
   overflow: hidden;
-  padding-right: 28px;
 }
 
 .semantic-result-card__highlight {
@@ -160,6 +164,15 @@ onMounted(() => {
   cursor: pointer;
   color: #3366cc;
   line-height: inherit;
+}
+
+.semantic-result-card__expand--up {
+  position: static;
+  align-self: flex-end;
+}
+
+.semantic-result-card__expand--up svg {
+  transform: rotate(180deg);
 }
 
 .semantic-result-card__body {
