@@ -823,7 +823,7 @@ onMounted(async () => {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  min-height: 52px;
+  min-height: 40px;
   padding: 0px 16px 0 8px;
   background: #ffffff;
   box-shadow: 0 4px 1px rgba(157, 157, 157, 0.25);
