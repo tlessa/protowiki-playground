@@ -928,6 +928,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top:16px;
 }
 
 .focused-search-content__title {
@@ -1005,7 +1006,7 @@ onMounted(async () => {
 
 .focused-search-dive-card-item {
   margin: 0;
-  padding: 4px 0 8px;
+  padding: 4px 0 0px;
 }
 
 .focused-search-dive-card {
@@ -1013,8 +1014,8 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: 1fr auto;
   column-gap: 16px;
-  row-gap: 8px;
-  padding: 16px;
+  row-gap: 0px;
+  padding: 8px 16px;
   background: #fff;
   border-top: 1px solid #c8ccd1;
   border-bottom: 1px solid #c8ccd1;
